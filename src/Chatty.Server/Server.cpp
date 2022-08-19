@@ -53,7 +53,7 @@ int main()
         // Winsock startup error
     }
 
-    std::cout << "[" << "00:00:00" << "]" << " STARTUP SUCCESSFUL\n";
+    std::cout << "[" << "00:00:00" << "] - " << "SERVER: " << "STARTUP SUCCESSFUL\n";
 
     // Create a listening socket
     SOCKET listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -62,7 +62,7 @@ int main()
         // Socket creation error
     }
 
-    std::cout << "[" << "00:00:00" << "]" << " LISTENING SOCKET CREATED\n";
+    std::cout << "[" << "00:00:00" << "] - " << "SERVER: " << "LISTENING SOCKET CREATED\n";
 
     // Initialize socket address
     SOCKADDR_IN serverAddr;
@@ -76,7 +76,7 @@ int main()
         // Binding error
     }
 
-    std::cout << "[" << "00:00:00" << "]" << " LISTENING SOCKET BINDING SUCCESSFUL\n";
+    std::cout << "[" << "00:00:00" << "] - " << "SERVER: " << "LISTENING SOCKET BINDING SUCCESSFUL\n";
 
 
     // Listen
@@ -85,19 +85,34 @@ int main()
         // Listening error
     }
 
-    std::cout << "[" << "00:00:00" << "]" << " SERVER IS LISTENING\n";
+    std::cout << "[" << "00:00:00" << "] - " << "SERVER: " << "LISTENING\n";
 
+    // Create the structure for stocket descriptors
     FD_SET masterSet, readySet;
     FD_ZERO(&masterSet);
     FD_SET(listenSocket, &masterSet);
     FD_ZERO(&readySet);
 
+    // Create the message buffer
+    uint8_t messageSize = 0;
+    auto buffer = new char[messageSize];
 
-    while (true)
+    // Server loop
+    bool serverLoop = true;
+    while (serverLoop == true)
     {
         readySet = masterSet;
 
-        int readySockets = select(0, &readySet, nullptr, nullptr, nullptr);
+        // 1 second timeout
+        TIMEVAL timeout;
+        timeout.tv_sec = 1;
+
+        int readySockets = select(0, &readySet, nullptr, nullptr, &timeout);
+
+        if (FD_ISSET(listenSocket, &readySet))
+        {
+        }
+
 
         for (int i = 0; i < readySockets; i++)
         {
@@ -110,13 +125,13 @@ int main()
                 // add the new connection to the list of connected clients
                 FD_SET(client, &masterSet);
 
-                std::cout << "[" << "00:00:00" << "]" << " NEW CLIENT CONNECTION\n";
+                std::cout << "[" << "00:00:00" << "] - " << "SERVER: " << "CLIENT " << client << " CONNECTED\n";
 
                 // send feedback to client
-                uint8_t size = 24;
-                char sendbuffer[24];
-                memset(sendbuffer, 0, 24);
-                strcpy(sendbuffer, "[CONNECTED TO SERVER]: ");
+                uint8_t size = 37;
+                char sendbuffer[37];
+                memset(sendbuffer, 0, 37);
+                strcpy(sendbuffer, "[00:00:00] - [CONNECTED TO SERVER]");
 
                 int result = tcp_send_whole(client, (char*)&size, 1);
 
@@ -124,34 +139,45 @@ int main()
             }
             else
             {
-                uint8_t messageSize = 0;
-
-                auto buffer = new char[messageSize];
-
                 // TODO: DUPLICATE CODE, COMPACT INTO ONE FUNCTION WITH SIZE PARAMETER
                 // accept new message
                 int bytes = tcp_recv_whole(communicationSocket, (char*)&messageSize, 1);
                 if (bytes <= 0)
                 {
+                    std::cout << "[" << "00:00:00" << "] - " << "SERVER: " << "CLIENT " << communicationSocket <<
+                        " DISCONNECTED\n";
+
                     // Drop the client
+                    shutdown(communicationSocket, SD_BOTH);
                     closesocket(communicationSocket);
                     FD_CLR(communicationSocket, &masterSet);
-                    std::cout << "[" << "00:00:00" << "]" << " CLIENT " << communicationSocket << " DISCONNECTED\n";
                     continue;
                 }
 
                 bytes = tcp_recv_whole(communicationSocket, buffer, messageSize);
                 if (bytes <= 0)
                 {
-                    std::cout << "[" << "00:00:00" << "]" << " MESSAGE COULD NOT BE RECEIVED\n";
+                    std::cout << "[" << "00:00:00" << "] - " << "MESSAGE COULD NOT BE RECEIVED\n";
                 }
                 else
                 {
-                    std::cout << communicationSocket << buffer << "\n";
+                    // Read message contents
+                    std::cout << "[" << "00:00:00" << "] - " << "CLIENT " << communicationSocket << ": " << buffer <<
+                        "\n";
                 }
+
             }
         }
+
+
     }
+
+    delete[] buffer;
+
+
+    // close both sockets
+    shutdown(listenSocket, SD_BOTH);
+    closesocket(listenSocket);
 
     WSACleanup();
 
