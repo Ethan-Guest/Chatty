@@ -14,19 +14,23 @@ public:
 	TcpService(const char* _ipAddress, int _port) : 
 		ipAddress(_ipAddress), port(_port) { }
 
+protected:
+
 	// Initialize the service
-	virtual bool Init();
+	bool InitWinsock();
 
 	// Run the service
-	virtual void Run();
-
-protected:
+	void Run();
 
 	int TcpSendMessage(SOCKET socket, const char* data, int length);
 	int TcpRecieveMessage(SOCKET socket, char* buf, int length);
 
+	SOCKET ConnectionSocket;
+	SOCKADDR_IN socketAddress;
+
 private:
+
 	const char*			ipAddress;
 	int					port;
-	SOCKET				ConnectionSocket;
+
 };

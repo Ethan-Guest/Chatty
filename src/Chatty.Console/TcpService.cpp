@@ -1,6 +1,6 @@
 #include "TcpService.h"
 
-bool TcpService::Init() 
+bool TcpService::InitWinsock() 
 {
     // Initialize winsock
     WSADATA wsadata;
@@ -22,10 +22,11 @@ bool TcpService::Init()
     std::cout << "[" << "00:00:00" << "] - " << "SERVER: " << "LISTENING SOCKET CREATED\n";
 
     // Initialize socket address
-    SOCKADDR_IN serverAddr;
-    serverAddr.sin_family = AF_INET;
-    inet_pton(AF_INET, ipAddress, &serverAddr.sin_addr);
-    serverAddr.sin_port = htons(port);
+    socketAddress.sin_family = AF_INET;
+    inet_pton(AF_INET, ipAddress, &socketAddress.sin_addr);
+    socketAddress.sin_port = htons(port);
+
+    return true;
 }
 void TcpService::Run()
 {
