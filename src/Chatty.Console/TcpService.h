@@ -10,21 +10,23 @@ class TcpService {
 
 public:
 
-	// ctor
+	// Service constructor
+	TcpService(const char* _ipAddress, int _port) : 
+		ipAddress(_ipAddress), port(_port) { }
 
 	// Initialize the service
 	virtual bool Init();
 
 	// Run the service
-	virtual int Run();
+	virtual void Run();
 
 protected:
 
-	void TcpSendMessage();
-	void TcpRecieveMessage();
+	int TcpSendMessage(SOCKET socket, const char* data, int length);
+	int TcpRecieveMessage(SOCKET socket, char* buf, int length);
 
 private:
-	const char* ipAddress;
-	int port;
-	SOCKET socket;
+	const char*			ipAddress;
+	int					port;
+	SOCKET				ConnectionSocket;
 };
