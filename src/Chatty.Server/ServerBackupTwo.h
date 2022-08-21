@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿
+#pragma once
 #include <string>
 #include <WS2tcpip.h>
 #include <stdio.h>
@@ -52,3 +53,4 @@ private:
 
     bool serverLoop;
 };
+

@@ -9,17 +9,17 @@ bool TcpService::InitWinsock()
         // TODO: Winsock startup error
         return false;
     }
-    std::cout << "[" << "00:00:00" << "] - " << "SERVER: " << "WINSOCK INITIALIZED\n";
+    std::cout << "[" << "00:00:00" << "] - WINSOCK INITIALIZED\n";
 
 
     // Create a listening socket
-    ConnectionSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (ConnectionSocket == INVALID_SOCKET)
+    connectionSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (connectionSocket == INVALID_SOCKET)
     {
         // Socket creation error
         return false;
     }
-    std::cout << "[" << "00:00:00" << "] - " << "SERVER: " << "LISTENING SOCKET CREATED\n";
+    std::cout << "[" << "00:00:00" << "] - LISTENING SOCKET CREATED\n";
 
     // Initialize socket address
     socketAddress.sin_family = AF_INET;
@@ -28,10 +28,12 @@ bool TcpService::InitWinsock()
 
     return true;
 }
+
 void TcpService::Run()
 {
-
+    
 }
+
 
 int TcpService::TcpSendMessage(SOCKET socket, const char* data, int length)
 {

@@ -1,4 +1,5 @@
-﻿#include "Server.h"
+﻿/*
+#include "Server.h"
 
 bool Server::Init()
 {
@@ -168,3 +169,4 @@ SOCKET Server::Net_Multiplexer()
 {
     return 0;
 }
+*/

@@ -16,7 +16,7 @@ int main()
 
         while(!(std::cin >> menuChoice)){
             std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << "Invalid option. Try again:\n";
         }
         switch(menuChoice) {
@@ -39,7 +39,7 @@ void StartServer()
 {
     // TODO: Prompt for address and port
     Server server("127.0.0.1", 31337);
-    if (server.Init())
+    if (server.InitServer())
     {
         server.Run();
     }
