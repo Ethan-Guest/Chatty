@@ -4,24 +4,29 @@
 class Server : public TcpService
 {
 public:
-	Server(const char* ipAddress, int port) :
-		TcpService(ipAddress, port), serverLoop(true){ }
+	Server(const char* ipAddress, uint16_t port) :
+		TcpService(ipAddress, port), serverMode(true)
+	{
+	}
 
 	bool InitServer();
 
 	void Run() override;
 
-	void ParseCommand();
+	void ReadCommand();
 
 	void OnClientConnect();
 
 	void OnClientDisconnect();
 
-	void LogAction(int mode, char* message);
+	void LogAction(char* message);
+
+
 
 private:
 	FD_SET						masterSet;		// The set of ALL file descriptors
 	FD_SET						readySet;		// The set of READY file descriptors
-	bool						serverLoop;		// Used to terminate the main server loop
-	std::map<SOCKET, char*>		clients;		// A map of clients, contains SOCKET # and client Username
+	bool serverMode; // Used to terminate the main server loop
+	std::map<SOCKET, ClientProfile> clients; // A map of clients, contains SOCKET # and client Username
+	ServerCommands commands; // Server commands
 };

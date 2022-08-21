@@ -35,7 +35,7 @@ bool Server::InitServer()
 
 void Server::Run()
 {
-    while (serverLoop)
+    while (serverMode)
     {
         // Copy original set
         readySet = masterSet;
@@ -56,18 +56,28 @@ void Server::Run()
 
             if (communicationSocket == connectionSocket)
             {
-                OnClientConnect();
+                // Accept a new connection
+                SOCKET client = accept(connectionSocket, nullptr, nullptr);
 
+                // add the new connection to the list of connected clients
+                FD_SET(client, &masterSet);
+
+                OnClientConnect();
             }
             else
             {
                 // Accept new message
+
+                // Check if the user is registered
+                // If not, reject the message and notify them.
 
                 // Set the buffer size
                 buffer = new char[messageSize]; 
 
                 // Receive the size of the message
                 int bytes = TcpRecieveMessage(communicationSocket, (char*)&messageSize, 1);
+
+                // If receive failed
                 if (bytes <= 0)
                 {
                     std::cout << "[" << "00:00:00" << "] - " << "SERVER:      " << "CLIENT " << communicationSocket <<
@@ -77,46 +87,90 @@ void Server::Run()
                     shutdown(communicationSocket, SD_BOTH);
                     closesocket(communicationSocket);
                     FD_CLR(communicationSocket, &masterSet);
+
+                    // Clear the buffer and continue
+                    ZeroMemory(buffer, messageSize);
+                    continue;
                 }
 
+                // Receive the incoming data
                 bytes = TcpRecieveMessage(communicationSocket, buffer, messageSize);
                 if (bytes <= 0)
                 {
                     std::cout << "[" << "00:00:00" << "] - " << "MESSAGE COULD NOT BE RECEIVED\n";
                 }
+                if (buffer[0] == '$')
+                {
+                    ReadCommand();
+                }
                 else
                 {
                     // Read message contents
+                    LogAction(buffer);
                     std::cout << "[" << "00:00:00" << "] - " << "CLIENT " << communicationSocket << ":  " << buffer <<
                         "\n";
                 }
-
+                // Clear the buffer
+                ZeroMemory(buffer, messageSize);
             }
         }
     }
 }
 
-void Server::ParseCommand()
+void Server::ReadCommand()
 {
+    // Check if the command is valid
 
+
+    // Convert the command to a string
+    std::string command(buffer);
+
+    // Convert to lowercase
+    std::transform(command.begin(), command.end(), command.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    // Convert to collection of strings (required for commands with multiple parameters)
+    std::vector<std::string> commandArguments;
+    std::stringstream commandStream(command);
+    std::string arg;
+    while (std::getline(commandStream, arg, ' '))
+    {
+        commandArguments.push_back(arg);
+    }
+
+    if (commandArguments[0] == "$exit")
+    {
+        commands.Exit();
+    }
+    if (commandArguments[0] == "$register")
+    {
+        commands.Register();
+    }
+    else if (commandArguments[0] == "$getlist")
+    {
+        commands.GetList();
+    }
+    else if (commandArguments[0] == "$getlog")
+    {
+        commands.GetLog();
+    }
+    // Not a valid command, reject and notify client
+    else
+    {
+    }
 }
 
 void Server::OnClientConnect()
 {
-    // Accept a new connection
-    SOCKET client = accept(connectionSocket, nullptr, nullptr);
-
-    // add the new connection to the list of connected clients
-    FD_SET(client, &masterSet);
-
-    std::cout << "[" << "00:00:00" << "] - " << "SERVER:      " << "CLIENT " << client << " CONNECTED\n";
+    std::cout << "[" << "00:00:00" << "] - " << "SERVER:      " << "CLIENT " << "client" << " CONNECTED\n";
 }
 
 void Server::OnClientDisconnect()
 {
 
 }
-void Server::LogAction(int mode, char* message) 
+
+void Server::LogAction(char* message) 
 {
     //std::cout << "[00:00:00] - " << "SERVER:      " << "CLIENT " << client << " CONNECTED\n";
 }

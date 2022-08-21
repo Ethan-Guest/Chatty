@@ -2,9 +2,11 @@
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
+#include <algorithm>
+#include <vector>
 #include <sstream>
 #include <map>
-
+#include "ServerCommands.h"
 #pragma comment (lib, "ws2_32.lib")
 
 class TcpService {
@@ -35,5 +37,5 @@ protected:
 private:
 
 	const char*			ipAddress;
-	int					port;
+	uint16_t port;
 };

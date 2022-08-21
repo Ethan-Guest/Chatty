@@ -55,7 +55,6 @@ int TcpService::TcpSendMessage(SOCKET socket, const char* data, int length)
 int TcpService::TcpRecieveMessage(SOCKET socket, char* buf, int length)
 {
     int total = 0;
-
     do
     {
         int ret = recv(socket, buf + total, length - total, 0);
