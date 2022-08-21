@@ -14,7 +14,7 @@ bool Server::InitServer()
         // Binding error
         return false;
     }
-    std::cout << "[" << "00:00:00" << "] - " << "SERVER:      " << "LISTENING SOCKET BINDING SUCCESSFUL\n";
+    LogAction({"SERVER:", "LISTENING SOCKET BINDING SUCCESSFUL"});
 
     // Start listening on the server socket
     if (listen(connectionSocket, SOMAXCONN) == SOCKET_ERROR)
@@ -23,7 +23,7 @@ bool Server::InitServer()
         return false;
     }
 
-    std::cout << "[" << "00:00:00" << "] - " << "SERVER:      " << "LISTENING\n";
+    LogAction({"SERVER:", "LISTENING MODE ENABLED"});
 
     // Add listening socket to master set
     FD_ZERO(&masterSet);
@@ -78,10 +78,10 @@ void Server::Run()
                 // If receive failed
                 if (bytes <= 0)
                 {
-                    std::cout << "[" << "00:00:00" << "] - " << "SERVER:      " << "CLIENT " << communicationSocket <<
-                        " DISCONNECTED\n";
+                    // Log disconnect
 
                     // Drop the client
+                    OnClientDisconnect(communicationSocket);
                     shutdown(communicationSocket, SD_BOTH);
                     closesocket(communicationSocket);
                     FD_CLR(communicationSocket, &masterSet);
@@ -95,21 +95,20 @@ void Server::Run()
                 bytes = TcpRecieveMessage(communicationSocket, buffer, messageSize);
                 if (bytes <= 0)
                 {
-                    std::cout << "[" << "00:00:00" << "] - " << "MESSAGE COULD NOT BE RECEIVED\n";
+                    std::string activeSocketStr = SocketToString(*activeSocket);
+                    LogAction({"ERROR: FAILED TO READ INCOMING MESSAGE FROM CLIENT", activeSocketStr});
                 }
                 if (buffer[0] == '$')
                 {
                     ReadCommand();
                 }
                 // If the user is registered, read the message. 
-                else if (clients.at(communicationSocket)->isRegistered == true)
+                else if (clients.at(communicationSocket)->isRegistered)
                 {
-                    LogAction(buffer);
-                    std::cout << "[" << "00:00:00" << "] - " << "CLIENT " << communicationSocket << ":  " << buffer <<
-                        "\n";
+                    LogAction({clients.at(*activeSocket)->userName, ":", buffer});
                 }
                 // If not, reject the message and notify them.
-                else
+                else if (!clients.at(communicationSocket)->isRegistered)
                 {
                     // notify user.
                 }
@@ -138,9 +137,31 @@ void Server::ReadCommand()
     {
         commandArguments.push_back(arg);
     }
+
     if (commandArguments[0] == "$register")
     {
-        clients.at(*activeSocket)->isRegistered = true;
+        if (commandArguments.size() <= 1)
+        {
+            // Notify the user that no name is provided
+            std::string activeSocketStr = SocketToString(*activeSocket);
+            LogAction({"ERROR: CLIENT", activeSocketStr, "USED $REGISTER BUT DID NOT PROVIDE A NAME."});
+            return;
+        }
+        // If there is space for the client
+        if (clients.size() <= clientCapacity)
+        {
+            clients.at(*activeSocket)->isRegistered = true;
+            clients.at(*activeSocket)->userName = commandArguments[1];
+            std::string activeSocketStr = SocketToString(*activeSocket);
+            LogAction({"SERVER: CLIENT", activeSocketStr, "REGISTERED AS", commandArguments[1]});
+        }
+        else
+        {
+            LogAction({"ERROR: CLIENT CAPACITY FULL"});
+
+            // No space, notify client
+        }
+
 
         //commands.Register();
     }
@@ -164,19 +185,47 @@ void Server::ReadCommand()
 
 void Server::OnClientConnect(SOCKET client)
 {
-    std::cout << client;
+    // Add the un-registered client to the collection of clients
     clients.insert({client, new ClientProfile()});
-    std::cout << clients.at(client);
-    //clients.insert(std::make_pair(client, new ClientProfile(client)));
-    std::cout << "[" << "00:00:00" << "] - " << "SERVER:      " << "CLIENT " << "client" << " CONNECTED\n";
+
+    std::string clientStr = SocketToString(client);
+    LogAction({"CLIENT", clientStr, "CONNECTED"});
 }
 
-void Server::OnClientDisconnect()
+void Server::OnClientDisconnect(SOCKET client)
 {
+    clients.erase(client);
+
+    std::string clientStr = SocketToString(client);
+    LogAction({"CLIENT", clientStr, "DISCONNECTED"});
+}
+
+void Server::LogAction(const std::list<std::string>& myArguments)
+{
+    std::string str;
+
+    str += "[00:00:00] - ";
+    for (auto elem : myArguments)
+    {
+        str += elem + " ";
+    }
+    str += "\n";
+
+    std::cout << str;
+}
+
+std::string Server::ObjToString(void* param)
+{
+    std::stringstream stringstream;
+    stringstream << param;
+    return stringstream.str();
 
 }
 
-void Server::LogAction(char* message) 
+std::string Server::SocketToString(SOCKET s)
 {
-    //std::cout << "[00:00:00] - " << "SERVER:      " << "CLIENT " << client << " CONNECTED\n";
+    std::stringstream stringstream;
+    stringstream << s;
+    return stringstream.str();
+
 }

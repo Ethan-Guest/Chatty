@@ -5,30 +5,34 @@
 #include <vector>
 #include <sstream>
 #include <map>
+#include <list>
 #include "ServerCommands.h"
 #include "ClientProfile.h"
 
 class Server : public TcpService
 {
 public:
-	Server(const char* ipAddress, uint16_t port) :
-		TcpService(ipAddress, port), serverMode(true)
+	Server(const char* ipAddress, uint16_t port, int maxClients) :
+		TcpService(ipAddress, port), serverMode(true), clientCapacity(maxClients)
 	{
 	}
 
-	bool InitServer();
+	bool InitServer(); // Initialize the server
 
-	void Run() override;
+	void Run() override; // The main server loop
 
-	void ReadCommand();
+	void ReadCommand(); // Read commands and process them
 
-	void OnClientConnect(SOCKET client);
+	void OnClientConnect(SOCKET client); // Handle a client connection
 
-	void OnClientDisconnect();
+	void OnClientDisconnect(SOCKET client); // Handle a client disconnection
 
-	void LogAction(char* message);
-				
+	void LogAction(const std::list<std::string>& myArguments); // Print to console and save to log
 
+	//TODO: Move these to static helper library or DLL
+	std::string ObjToString(void* param); // Helper function for converting an OBJECT of unknown type to a string
+
+	std::string SocketToString(SOCKET s); // Helper function for converting an SOCKET to a string
 
 private:
 	FD_SET masterSet; // The set of ALL file descriptors
@@ -37,4 +41,5 @@ private:
 	//ServerCommands						commands;		// Server commands
 	std::map<SOCKET, ClientProfile*> clients; // A map of clients, contains SOCKET # and client Username
 	SOCKET* activeSocket; // The socket that is currently being read
+	int clientCapacity; // The max number of clients allowed in the server
 };

@@ -39,13 +39,16 @@ void StartServer()
 {
     std::string ipAddress = "127.0.0.1";
     uint16_t port = 31337;
+    int maxClients = 15;
     //std::cout << "Server Configuration:\n";
     //std::cout << "IP: ";
     //std::cin >> ipAddress;
     //std::cout << "PORT: ";
     //std::cin >> port;
+    //std::cout << "MAX ALLOWED CLIENTS: ";
+    //std::cin >> maxClients;
 
-    Server server((char*)&ipAddress, port);
+    Server server((char*)&ipAddress, port, maxClients);
     if (server.InitServer())
     {
         server.Run();
