@@ -53,6 +53,7 @@ void Server::Run()
         for (int i = 0; i < readySockets; i++)
         {
             SOCKET communicationSocket = readySet.fd_array[i];
+            activeSocket = &communicationSocket;
 
             if (communicationSocket == connectionSocket)
             {
@@ -62,14 +63,11 @@ void Server::Run()
                 // add the new connection to the list of connected clients
                 FD_SET(client, &masterSet);
 
-                OnClientConnect();
+                OnClientConnect(client);
             }
             else
             {
                 // Accept new message
-
-                // Check if the user is registered
-                // If not, reject the message and notify them.
 
                 // Set the buffer size
                 buffer = new char[messageSize]; 
@@ -103,13 +101,19 @@ void Server::Run()
                 {
                     ReadCommand();
                 }
-                else
+                // If the user is registered, read the message. 
+                else if (clients.at(communicationSocket)->isRegistered == true)
                 {
-                    // Read message contents
                     LogAction(buffer);
                     std::cout << "[" << "00:00:00" << "] - " << "CLIENT " << communicationSocket << ":  " << buffer <<
                         "\n";
                 }
+                // If not, reject the message and notify them.
+                else
+                {
+                    // notify user.
+                }
+
                 // Clear the buffer
                 ZeroMemory(buffer, messageSize);
             }
@@ -119,9 +123,6 @@ void Server::Run()
 
 void Server::ReadCommand()
 {
-    // Check if the command is valid
-
-
     // Convert the command to a string
     std::string command(buffer);
 
@@ -137,22 +138,23 @@ void Server::ReadCommand()
     {
         commandArguments.push_back(arg);
     }
-
-    if (commandArguments[0] == "$exit")
-    {
-        commands.Exit();
-    }
     if (commandArguments[0] == "$register")
     {
-        commands.Register();
+        clients.at(*activeSocket)->isRegistered = true;
+
+        //commands.Register();
+    }
+    if (commandArguments[0] == "$exit")
+    {
+        //commands.Exit();
     }
     else if (commandArguments[0] == "$getlist")
     {
-        commands.GetList();
+        //commands.GetList();
     }
     else if (commandArguments[0] == "$getlog")
     {
-        commands.GetLog();
+        //commands.GetLog();
     }
     // Not a valid command, reject and notify client
     else
@@ -160,8 +162,12 @@ void Server::ReadCommand()
     }
 }
 
-void Server::OnClientConnect()
+void Server::OnClientConnect(SOCKET client)
 {
+    std::cout << client;
+    clients.insert({client, new ClientProfile()});
+    std::cout << clients.at(client);
+    //clients.insert(std::make_pair(client, new ClientProfile(client)));
     std::cout << "[" << "00:00:00" << "] - " << "SERVER:      " << "CLIENT " << "client" << " CONNECTED\n";
 }
 

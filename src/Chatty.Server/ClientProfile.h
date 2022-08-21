@@ -4,6 +4,12 @@
 class ClientProfile
 {
 public:
-    const char* userName;
-    bool isRegistered;
+    // Profile constructor
+    ClientProfile() :
+        userName(""), isRegistered(false)
+    {
+    }
+
+    const char* userName; // The username of the client
+    bool isRegistered; // Whether or not the user is registered
 };
