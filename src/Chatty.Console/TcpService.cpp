@@ -35,7 +35,7 @@ void TcpService::Run()
 }
 
 
-int TcpService::TcpSendMessage(SOCKET socket, const char* data, int length)
+int TcpService::TcpSendMessage(SOCKET socket, const char* data, uint16_t length)
 {
     int result;
     int bytesSent = 0;

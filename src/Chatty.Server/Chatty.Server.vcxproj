@@ -131,13 +131,11 @@
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerBackupTwo.cpp" />
     <ClCompile Include="ServerBackup.cpp" />
-    <ClCompile Include="ServerCommands.cpp"/>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientProfile.h"/>
     <ClInclude Include="Server.h" />
     <ClInclude Include="ServerBackupTwo.h" />
-    <ClInclude Include="ServerCommands.h"/>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

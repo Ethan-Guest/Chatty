@@ -20,7 +20,7 @@ protected:
 	// Run the service
 	virtual void Run();
 
-	int TcpSendMessage(SOCKET socket, const char* data, int length);
+	int TcpSendMessage(SOCKET socket, const char* data, uint16_t length);
 
 	int TcpRecieveMessage(SOCKET socket, char* buf, int length);
 

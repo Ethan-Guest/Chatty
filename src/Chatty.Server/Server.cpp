@@ -55,7 +55,9 @@ void Server::Run()
             SOCKET communicationSocket = readySet.fd_array[i];
             activeSocket = &communicationSocket;
 
-            if (communicationSocket == connectionSocket)
+
+            // Check if listening socket is SET and accept new connection
+            if (FD_ISSET(connectionSocket, &readySet))
             {
                 // Accept a new connection
                 SOCKET client = accept(connectionSocket, nullptr, nullptr);
@@ -161,26 +163,71 @@ void Server::ReadCommand()
 
             // No space, notify client
         }
+    }
 
+    else if (commandArguments[0] == "$getlist")
+    {
+        std::string message;
+        if (clients.size() <= 0)
+        {
+            message = "No clients connected.";
 
-        //commands.Register();
+            TcpSendClientMessage(message);
+        }
+        else
+        {
+            // Construct a message out of the clients collection
+            for (const auto& x : clients)
+            {
+                std::string socketId = SocketToString(x.first);
+                std::string userName;
+                if (x.second->userName == "")
+                {
+                    userName = "<username>";
+                }
+                else
+                {
+                    userName = x.second->userName;
+                }
+
+                std::string status;
+                if (x.second->isRegistered)
+                {
+                    status = "registered";
+                }
+                else
+                {
+                    status = "unregistered";
+                }
+                message = socketId + " : " + userName + " : " + status + "\n";
+            }
+            TcpSendClientMessage(message);
+        }
     }
     if (commandArguments[0] == "$exit")
     {
-        //commands.Exit();
-    }
-    else if (commandArguments[0] == "$getlist")
-    {
-        //commands.GetList();
+
     }
     else if (commandArguments[0] == "$getlog")
     {
-        //commands.GetLog();
+
     }
     // Not a valid command, reject and notify client
     else
     {
     }
+}
+
+void Server::TcpSendClientMessage(std::string message)
+{
+    int32_t size = message.length();
+    const char* data = message.c_str();
+
+    // Send the size of the data 
+    int result = TcpSendMessage(*activeSocket, (char*)&size, 1);
+
+    // Send the data itself
+    result = TcpSendMessage(*activeSocket, data, size);
 }
 
 void Server::OnClientConnect(SOCKET client)
