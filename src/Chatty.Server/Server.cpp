@@ -82,7 +82,7 @@ void Server::Run()
                 {
                     // Log disconnect
 
-                    // Drop the client
+                    // Close connection
                     OnClientDisconnect(communicationSocket);
                     shutdown(communicationSocket, SD_BOTH);
                     closesocket(communicationSocket);
@@ -154,54 +154,69 @@ void Server::ReadCommand()
         {
             clients.at(*activeSocket)->isRegistered = true;
             clients.at(*activeSocket)->userName = commandArguments[1];
-            std::string activeSocketStr = SocketToString(*activeSocket);
-            LogAction({"SERVER: CLIENT", activeSocketStr, "REGISTERED AS", commandArguments[1]});
+            LogAction({"SERVER: CLIENT", SocketToString(*activeSocket), "REGISTERED AS", commandArguments[1]});
+            TcpSendClientMessage("SV_SUCCESS");
         }
         else
         {
+            // No space, notify client and close connection
             LogAction({"ERROR: CLIENT CAPACITY FULL"});
-
-            // No space, notify client
+            TcpSendClientMessage("SV_FULL");
+            OnClientDisconnect(*activeSocket);
+            shutdown(*activeSocket, SD_BOTH);
+            closesocket(*activeSocket);
+            FD_CLR(*activeSocket, &masterSet);
         }
     }
 
     else if (commandArguments[0] == "$getlist")
     {
-        std::string message;
-        if (clients.size() <= 0)
+        // If the client is registered
+        if (clients.at(*activeSocket)->isRegistered)
         {
-            message = "No clients connected.";
+            std::string message;
+            if (clients.size() <= 1)
+            {
+                message = "No clients connected.";
 
-            TcpSendClientMessage(message);
+                TcpSendClientMessage(message);
+            }
+            else
+            {
+                // Construct a message out of the clients collection
+                for (const auto& x : clients)
+                {
+                    std::string socketId = SocketToString(x.first);
+                    std::string userName;
+                    if (x.second->userName == "")
+                    {
+                        userName = "<username>";
+                    }
+                    else
+                    {
+                        userName = x.second->userName;
+                    }
+                    std::string status;
+                    if (x.second->isRegistered)
+                    {
+                        status = "registered";
+                    }
+                    else
+                    {
+                        status = "unregistered";
+                    }
+                    message += socketId + " : " + userName + " : " + status + ",\n";
+                }
+                message.erase(message.length() - 2, 1);
+                TcpSendClientMessage(message);
+            }
         }
+        // If the user is not registered
         else
         {
-            // Construct a message out of the clients collection
-            for (const auto& x : clients)
-            {
-                std::string socketId = SocketToString(x.first);
-                std::string userName;
-                if (x.second->userName == "")
-                {
-                    userName = "<username>";
-                }
-                else
-                {
-                    userName = x.second->userName;
-                }
-
-                std::string status;
-                if (x.second->isRegistered)
-                {
-                    status = "registered";
-                }
-                else
-                {
-                    status = "unregistered";
-                }
-                message = socketId + " : " + userName + " : " + status + "\n";
-            }
-            TcpSendClientMessage(message);
+            SocketToString(*activeSocket);
+            LogAction({"ERROR: CLIENT", SocketToString(*activeSocket), "USED $GETLIST BUT IS NOT REGISTERED."});
+            TcpSendClientMessage("Please register with $register before using $getlist.");
         }
     }
     if (commandArguments[0] == "$exit")

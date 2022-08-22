@@ -26,7 +26,7 @@ protected:
 
 	SOCKET				connectionSocket; // The listening / connection socket
 	SOCKADDR_IN			socketAddress;	  // The socket address
-	uint8_t				messageSize;
+	uint16_t messageSize;
 	char*				buffer;
 
 private:
