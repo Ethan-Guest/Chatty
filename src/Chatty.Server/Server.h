@@ -22,8 +22,6 @@ public:
 
 	void ReadCommand(); // Read commands and process them
 
-	void TcpSendClientMessage(std::string message); // Send the client a message in one method
-
 	void OnClientConnect(SOCKET client); // Handle a client connection
 
 	void OnClientDisconnect(SOCKET client); // Handle a client disconnection

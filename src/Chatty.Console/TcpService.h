@@ -22,6 +22,8 @@ protected:
 
 	int TcpSendMessage(SOCKET socket, const char* data, uint16_t length);
 
+	void TcpSendFullMessage(SOCKET s, std::string message); // Send the client a message in one method
+
 	int TcpRecieveMessage(SOCKET socket, char* buf, int length);
 
 	SOCKET				connectionSocket; // The listening / connection socket

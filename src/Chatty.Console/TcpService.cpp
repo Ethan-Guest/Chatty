@@ -52,6 +52,19 @@ int TcpService::TcpSendMessage(SOCKET socket, const char* data, uint16_t length)
 
     return bytesSent;
 }
+
+void TcpService::TcpSendFullMessage(SOCKET s, std::string message)
+{
+    int32_t size = message.length();
+    const char* data = message.c_str();
+
+    // Send the size of the data 
+    int result = TcpSendMessage(s, (char*)&size, 1);
+
+    // Send the data itself
+    result = TcpSendMessage(s, data, size);
+}
+
 int TcpService::TcpRecieveMessage(SOCKET socket, char* buf, int length)
 {
     int total = 0;

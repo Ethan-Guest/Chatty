@@ -147,6 +147,7 @@ void Server::ReadCommand()
             // Notify the user that no name is provided
             std::string activeSocketStr = SocketToString(*activeSocket);
             LogAction({"ERROR: CLIENT", activeSocketStr, "USED $REGISTER BUT DID NOT PROVIDE A NAME."});
+            TcpSendFullMessage(*activeSocket, "ERROR: Please provide a username with $register <username>");
             return;
         }
         // If there is space for the client
@@ -155,13 +156,13 @@ void Server::ReadCommand()
             clients.at(*activeSocket)->isRegistered = true;
             clients.at(*activeSocket)->userName = commandArguments[1];
             LogAction({"SERVER: CLIENT", SocketToString(*activeSocket), "REGISTERED AS", commandArguments[1]});
-            TcpSendClientMessage("SV_SUCCESS");
+            TcpSendFullMessage(*activeSocket, "SV_SUCCESS");
         }
         else
         {
             // No space, notify client and close connection
             LogAction({"ERROR: CLIENT CAPACITY FULL"});
-            TcpSendClientMessage("SV_FULL");
+            TcpSendFullMessage(*activeSocket, "SV_FULL");
             OnClientDisconnect(*activeSocket);
             shutdown(*activeSocket, SD_BOTH);
             closesocket(*activeSocket);
@@ -179,14 +180,17 @@ void Server::ReadCommand()
             {
                 message = "No clients connected.";
 
-                TcpSendClientMessage(message);
+                TcpSendFullMessage(*activeSocket, message);
             }
             else
             {
                 // Construct a message out of the clients collection
                 for (const auto& x : clients)
                 {
+                    // The clients socket
                     std::string socketId = SocketToString(x.first);
+
+                    // The clients username
                     std::string userName;
                     if (x.second->userName == "")
                     {
@@ -196,6 +200,8 @@ void Server::ReadCommand()
                     {
                         userName = x.second->userName;
                     }
+
+                    // The clients registration status
                     std::string status;
                     if (x.second->isRegistered)
                     {
@@ -205,20 +211,29 @@ void Server::ReadCommand()
                     {
                         status = "unregistered";
                     }
+
+                    // concatenate the above strings to construct a message
                     message += socketId + " : " + userName + " : " + status + ",\n";
                 }
+
+                // Remove the last comma and send the message
                 message.erase(message.length() - 2, 1);
-                TcpSendClientMessage(message);
+                TcpSendFullMessage(*activeSocket, message);
             }
         }
         // If the user is not registered
         else
         {
-            SocketToString(*activeSocket);
             LogAction({"ERROR: CLIENT", SocketToString(*activeSocket), "USED $GETLIST BUT IS NOT REGISTERED."});
-            TcpSendClientMessage("Please register with $register before using $getlist.");
+            TcpSendFullMessage(*activeSocket, "Please register with $register before using $getlist.");
         }
     }
+    else if (commandArguments[0] == "$help")
+    {
+        TcpSendFullMessage(*activeSocket,
+                           "Server commands:\n$register <username> - Registers a client.\n$exit - Close the connection to the server.\n$getlist - Get a list of all other connected clients.\n$getlog - Get a log of all server actions and messages.\n");
+    }
+
     if (commandArguments[0] == "$exit")
     {
 
@@ -233,17 +248,7 @@ void Server::ReadCommand()
     }
 }
 
-void Server::TcpSendClientMessage(std::string message)
-{
-    int32_t size = message.length();
-    const char* data = message.c_str();
 
-    // Send the size of the data 
-    int result = TcpSendMessage(*activeSocket, (char*)&size, 1);
-
-    // Send the data itself
-    result = TcpSendMessage(*activeSocket, data, size);
-}
 
 void Server::OnClientConnect(SOCKET client)
 {
