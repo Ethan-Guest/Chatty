@@ -1,6 +1,6 @@
 #include <iostream>
-#include "Server.h"
 #include "Client.h"
+#include "Server.h"
 
 void StartServer();
 void StartClient();
@@ -56,19 +56,19 @@ void StartServer()
 }
 void StartClient()
 {
-    std::string ipAddress = "127.0.0.1";
-    uint16_t port = 31337;
+    //std::string ipAddress = "127.0.0.1";
+    //uint16_t port = 31337;
 
-    std::cout << "Connect to:\n";
-    std::cout << "IP: ";
-    std::cin >> ipAddress;
-    std::cout << "PORT: ";
-    std::cin >> port;
+    //std::cout << "Connect to:\n";
+    //std::cout << "IP: ";
+    //std::cin >> ipAddress;
+    //std::cout << "PORT: ";
+    //std::cin >> port;
 
 
-    Client client((char*)&ipAddress, port);
-    if (client.InitClient())
-    {
-        client.Run();
-    }
+    //Client client((char*)&ipAddress, port);
+    //if (client.InitClient())
+    //{
+    //    client.Run();
+    //}
 }

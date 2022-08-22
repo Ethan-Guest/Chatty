@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{13ef5b56-d1f1-47d9-9780-d3cb373d92ae}</ProjectGuid>
+    <ProjectGuid>{34e85cab-c920-4d44-9fbd-703c5f6828cd}</ProjectGuid>
     <RootNamespace>ChattyClient</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -131,13 +131,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Client.cpp"/>
-    <ClCompile Include="ClientBackup.cpp"/>
+      <ClInclude Include="Client.h"/>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Client.h"/>
+      <ClCompile Include="Client.cpp"/>
   </ItemGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
