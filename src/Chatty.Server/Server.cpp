@@ -1,3 +1,6 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "Server.h"
 
 bool Server::InitServer()
@@ -46,8 +49,6 @@ void Server::Run()
 
         // Select incoming sockets
         int readySockets = select(0, &readySet, nullptr, nullptr, &timeout);
-
-
 
         // Loop through ready sockets
         for (int i = 0; i < readySockets; i++)
@@ -269,9 +270,16 @@ void Server::OnClientDisconnect(SOCKET client)
 
 void Server::LogAction(const std::list<std::string>& myArguments)
 {
+    // Print the time
+    time_t curr_time;
+    tm* curr_tm;
+    char time_string[100];
+    time(&curr_time);
+    curr_tm = localtime(&curr_time);
+    strftime(time_string, 50, "%T", curr_tm);
+    std::string hhmmss(time_string);
     std::string str;
-
-    str += "[00:00:00] - ";
+    str += "[" + hhmmss + "] - ";
     for (auto elem : myArguments)
     {
         str += elem + " ";

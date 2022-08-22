@@ -56,5 +56,9 @@ void StartServer()
 }
 void StartClient()
 {
-    
+    //Client client((char*)&ipAddress, port);
+    //if (client.InitClient())
+    //{
+    //    client.Run();
+    //}
 }

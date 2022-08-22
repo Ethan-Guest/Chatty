@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <WS2tcpip.h>
+#include <ctime>
 
 #pragma comment (lib, "ws2_32.lib")
 
