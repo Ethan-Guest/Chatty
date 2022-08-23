@@ -71,12 +71,12 @@ void Server::Run()
             else
             {
                 // Accept new message
-
-                // Set the buffer size
-                buffer = new char[messageSize]; 
-
+                
                 // Receive the size of the message
                 int bytes = TcpRecieveMessage(communicationSocket, (char*)&messageSize, 1);
+
+                // Set the buffer size
+                buffer = new char[messageSize];
 
                 // If receive failed
                 if (bytes <= 0)
@@ -157,7 +157,7 @@ void Server::ReadCommand()
             TcpSendFullMessage(*activeSocket, "ERROR: Please provide a username with $register <username>");
             return;
         }
-        // If there is space for the client
+        // Successful Registration
         if (clients.size() <= clientCapacity)
         {
             clients.at(*activeSocket)->isRegistered = true;

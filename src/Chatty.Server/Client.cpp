@@ -23,6 +23,7 @@ bool Client::InitClient()
     {
         std::cout << "CONNECTED TO SERVER\n";
     }
+    return true;
 }
 
 void Client::Run()
@@ -33,8 +34,10 @@ void Client::Run()
 
     while (clientMode)
     {
+
         while (run.load())
         {
+
             // Get the line from the user
             std::string message;
             std::getline(std::cin, message);
@@ -44,7 +47,8 @@ void Client::Run()
             auto sendbuffer = new char[size];
 
             // Convert message to proper format for send
-            memset(sendbuffer, 0, size);
+            ZeroMemory(sendbuffer, size);
+            //memset(sendbuffer, 0, size);
             const char* messagechar = message.c_str();
             strcpy(sendbuffer, messagechar);
 
@@ -70,9 +74,28 @@ void Client::ReceiveFromServer()
 {
     while (run.load())
     {
-        buffer = new char[messageSize];
+        // Receive the size of the data
         int result = TcpRecieveMessage(connectionSocket, (char*)&messageSize, 1);
+
+        // Create the buffer
+        buffer = new char[messageSize];
+
+        // Receive the data itself
         result = TcpRecieveMessage(connectionSocket, buffer, messageSize);
+        //	If error appeared during receipt and WAS caused by shutdown, return SHUTDOWN.
+        if (result == 0)
+        {
+            std::cout << "SOCKET_ERROR\n";
+        }
+        //	If error appeared during receipt and was not caused by shutdown, return DISCONNECT.
+        if (result == SOCKET_ERROR)
+        {
+            std::cout << "The server was shutdown.\n";
+            run = false;
+            continue;
+        }
+
+
         std::cout << buffer << "\n";
         ZeroMemory(buffer, messageSize);
     }
