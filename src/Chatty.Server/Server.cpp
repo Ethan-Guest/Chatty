@@ -272,7 +272,29 @@ void Server::ReadCommand()
     }
     else if (commandArguments[0] == "$getlog")
     {
+        // Check if the client is registered
+        if (clients.at(*activeSocket)->isRegistered)
+        {
+            TcpSendFullMessage(*activeSocket, "\nCURRENT SERVER LOG:\n");
 
+            // Create ifstream
+            std::ifstream serverLog(serverLogFileName);
+
+            // Get each line of the file
+            std::string currentLine;
+            while (std::getline(serverLog, currentLine))
+            {
+                // Send the current line to the client
+                std::istringstream stringStream(currentLine);
+                TcpSendFullMessage(*activeSocket, currentLine);
+            }
+            LogAction({"CLIENT", SocketToString(*activeSocket), "USED $GETLOG"});
+        }
+        else
+        {
+            LogAction({"ERROR: CLIENT", SocketToString(*activeSocket), "USED $GETLOG BUT IS NOT REGISTERED."});
+            TcpSendFullMessage(*activeSocket, "Please register with $register before using $getlog.");
+        }
     }
     // Not a valid command, reject and notify client
     else
