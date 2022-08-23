@@ -13,8 +13,11 @@ public:
 
     void Run() override; // The main client loop
 
+    void ReadInputLoop();
 
 private:
+
     bool clientMode;
     std::string userName; // Cleint username
+    std::atomic<bool> run = true; // Synchronizing bool
 };

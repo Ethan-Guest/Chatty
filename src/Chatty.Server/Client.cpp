@@ -1,5 +1,7 @@
 #include "Client.h"
 #include <string>
+#include <atomic>
+#include <thread>
 
 bool Client::InitClient()
 {
@@ -22,26 +24,42 @@ bool Client::InitClient()
 
 void Client::Run()
 {
-    while (clientMode)
+    // Create a thread for reading user input
+    std::thread readInputThread(&Client::ReadInputLoop, this);
+
+    // Main loop listens for messages from server
+    while (run.load())
     {
-        // Get the line from the user
-        std::string message;
-        std::getline(std::cin, message);
+        std::cout << "test\n";
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+    }
+}
 
-        // Create a buffer with the size of the message
-        uint8_t size = message.length() + 1;
-        auto sendbuffer = new char[size];
-
-        // Convert message to proper format for send
-        memset(sendbuffer, 0, size);
-        const char* messagechar = message.c_str();
-        strcpy(sendbuffer, messagechar);
-
-        // Check that the message is not empty
-        if (std::strlen(messagechar) > 1)
+void Client::ReadInputLoop()
+{
+    while (run.load())
+    {
+        while (clientMode)
         {
-            TcpSendMessage(connectionSocket, (char*)&size, 1);
-            TcpSendMessage(connectionSocket, sendbuffer, size);
+            // Get the line from the user
+            std::string message;
+            std::getline(std::cin, message);
+
+            // Create a buffer with the size of the message
+            uint8_t size = message.length() + 1;
+            auto sendbuffer = new char[size];
+
+            // Convert message to proper format for send
+            memset(sendbuffer, 0, size);
+            const char* messagechar = message.c_str();
+            strcpy(sendbuffer, messagechar);
+
+            // Check that the message is not empty
+            if (std::strlen(messagechar) > 1)
+            {
+                TcpSendMessage(connectionSocket, (char*)&size, 1);
+                TcpSendMessage(connectionSocket, sendbuffer, size);
+            }
         }
     }
 }
