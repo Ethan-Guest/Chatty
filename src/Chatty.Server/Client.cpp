@@ -77,16 +77,15 @@ void Client::ReceiveFromServer()
 {
     while (run.load())
     {
-        uint8_t size = 0;
-        auto msgBuffer = new char[size];
+        //uint8_t size = 0;
+        buffer = new char[messageSize];
         //std::this_thread::sleep_for(std::chrono::seconds(3));
         //std::cout << "TEST\n";
-        int result = TcpRecieveMessage(connectionSocket, (char*)&size, 1);
-        result = TcpRecieveMessage(connectionSocket, msgBuffer, size);
-        std::cout << msgBuffer;
-        //ZeroMemory(msgBuffer, size);
-
-
+        //buffer[4096];
+        int result = TcpRecieveMessage(connectionSocket, (char*)&messageSize, 1);
+        result = TcpRecieveMessage(connectionSocket, buffer, messageSize);
+        std::cout << buffer;
+        ZeroMemory(buffer, messageSize);
     }
 
 }

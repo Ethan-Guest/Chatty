@@ -113,7 +113,8 @@ void Server::Run()
                 // If not, reject the message and notify them.
                 else if (!clients.at(communicationSocket)->isRegistered)
                 {
-                    // notify user.
+                    TcpSendFullMessage(*activeSocket,
+                                       "ERROR: Please use $register <username> before sending messages.");
                 }
 
                 // Clear the buffer
@@ -143,6 +144,11 @@ void Server::ReadCommand()
 
     if (commandArguments[0] == "$register")
     {
+        if (clients.at(*activeSocket)->isRegistered = true)
+        {
+            TcpSendFullMessage(*activeSocket, "ERROR: You are already registered.");
+            return;
+        }
         if (commandArguments.size() <= 1)
         {
             // Notify the user that no name is provided
