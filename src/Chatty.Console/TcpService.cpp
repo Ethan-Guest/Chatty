@@ -72,7 +72,7 @@ int TcpService::TcpSendMessage(SOCKET socket, const char* data, uint16_t length)
 
 void TcpService::TcpSendFullMessage(SOCKET s, std::string message)
 {
-    int32_t size = message.length();
+    int32_t size = message.length() + 1;
     const char* data = message.c_str();
 
     // Send the size of the data 
