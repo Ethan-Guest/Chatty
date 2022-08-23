@@ -144,7 +144,7 @@ void Server::ReadCommand()
 
     if (commandArguments[0] == "$register")
     {
-        if (clients.at(*activeSocket)->isRegistered = true)
+        if (clients.at(*activeSocket)->isRegistered == true)
         {
             TcpSendFullMessage(*activeSocket, "ERROR: You are already registered.");
             return;
@@ -185,7 +185,7 @@ void Server::ReadCommand()
             std::string message;
             if (clients.size() <= 1)
             {
-                message = "No clients connected.";
+                message = "You are the only client connected.";
 
                 TcpSendFullMessage(*activeSocket, message);
             }

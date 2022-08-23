@@ -56,35 +56,24 @@ void Client::Run()
             }
         }
     }
+
+    // Close the thread
+    run.store(false);
+    readInputThread.join();
+
+    // Close the connection
     shutdown(connectionSocket, SD_BOTH);
     closesocket(connectionSocket);
-    // Main loop listens for messages from server
-    //while (run.load())
-    //{
-    //    //std::cout << "test\n";
-    //    //std::this_thread::sleep_for(std::chrono::seconds(3));
-
-    //    int result = TcpRecieveMessage(connectionSocket, (char*)&messageSize, 1);
-    //    result = TcpRecieveMessage(connectionSocket, (char*)buffer, messageSize);
-
-    //}
-    //run.store(false)
-    //readInputThread.join();
-    //ReadInputLoop();
 }
 
 void Client::ReceiveFromServer()
 {
     while (run.load())
     {
-        //uint8_t size = 0;
         buffer = new char[messageSize];
-        //std::this_thread::sleep_for(std::chrono::seconds(3));
-        //std::cout << "TEST\n";
-        //buffer[4096];
         int result = TcpRecieveMessage(connectionSocket, (char*)&messageSize, 1);
         result = TcpRecieveMessage(connectionSocket, buffer, messageSize);
-        std::cout << buffer;
+        std::cout << buffer << "\n";
         ZeroMemory(buffer, messageSize);
     }
 
