@@ -21,7 +21,7 @@ bool Client::InitClient()
     }
     else
     {
-        std::cout << "CONNECTED TO SERVER\n";
+        std::cout << "CONNECTED TO SERVER\nType $help to get started.\n";
     }
     return true;
 }

@@ -81,13 +81,8 @@ void Server::Run()
                 // If receive failed
                 if (bytes <= 0)
                 {
-                    // Log disconnect
-
                     // Close connection
                     OnClientDisconnect(communicationSocket);
-                    shutdown(communicationSocket, SD_BOTH);
-                    closesocket(communicationSocket);
-                    FD_CLR(communicationSocket, &masterSet);
 
                     // Clear the buffer and continue
                     ZeroMemory(buffer, messageSize);
@@ -158,22 +153,21 @@ void Server::ReadCommand()
             return;
         }
         // Successful Registration
-        if (clients.size() < clientCapacity)
+        if (clients.size() <= clientCapacity)
         {
             clients.at(*activeSocket)->isRegistered = true;
             clients.at(*activeSocket)->userName = commandArguments[1];
             LogAction({"SERVER: CLIENT", SocketToString(*activeSocket), "REGISTERED AS", commandArguments[1]});
             TcpSendFullMessage(*activeSocket, "SV_SUCCESS");
         }
-        else if (clients.size() >= clientCapacity)
+        else if (clients.size() > clientCapacity)
         {
-            // No space, notify client and close connection
+            // No space, notify client
             LogAction({"ERROR: CLIENT CAPACITY FULL"});
             TcpSendFullMessage(*activeSocket, "SV_FULL");
+
+            // Close connection
             OnClientDisconnect(*activeSocket);
-            shutdown(*activeSocket, SD_BOTH);
-            closesocket(*activeSocket);
-            FD_CLR(*activeSocket, &masterSet);
         }
     }
 
@@ -238,12 +232,13 @@ void Server::ReadCommand()
     else if (commandArguments[0] == "$help")
     {
         TcpSendFullMessage(*activeSocket,
-                           "Server commands:\n$register <username> - Registers a client.\n$exit - Close the connection to the server.\n$getlist - Get a list of all other connected clients.\n$getlog - Get a log of all server actions and messages.\n");
+                           "Server commands:\n$register <username> - Registers a client.\n$getlist - Get a list of all other connected clients.\n$getlog - Get a log of all server actions and messages.\n$exit - Close the connection to the server.\n");
     }
 
     if (commandArguments[0] == "$exit")
     {
-
+        // Close connection
+        OnClientDisconnect(*activeSocket);
     }
     else if (commandArguments[0] == "$getlog")
     {
@@ -262,16 +257,24 @@ void Server::OnClientConnect(SOCKET client)
     // Add the un-registered client to the collection of clients
     clients.insert({client, new ClientProfile()});
 
+    // Write to console + log
     std::string clientStr = SocketToString(client);
     LogAction({"CLIENT", clientStr, "CONNECTED"});
 }
 
 void Server::OnClientDisconnect(SOCKET client)
 {
+    // Remove the client from list of clients
     clients.erase(client);
 
+    // Log client disconnect
     std::string clientStr = SocketToString(client);
     LogAction({"CLIENT", clientStr, "DISCONNECTED"});
+
+    // Close the connection
+    shutdown(client, SD_BOTH);
+    closesocket(client);
+    FD_CLR(client, &masterSet);
 }
 
 void Server::LogAction(const std::list<std::string>& myArguments)
