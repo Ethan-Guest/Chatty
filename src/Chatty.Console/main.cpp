@@ -39,7 +39,7 @@ void StartServer()
 {
     std::string ipAddress = "127.0.0.1";
     uint16_t port = 31337;
-    int maxClients = 15;
+    int maxClients = 3;
     //std::cout << "Server Configuration:\n";
     //std::cout << "IP: ";
     //std::cin >> ipAddress;

@@ -85,7 +85,9 @@ void Client::ReceiveFromServer()
         //	If error appeared during receipt and WAS caused by shutdown, return SHUTDOWN.
         if (result == 0)
         {
-            std::cout << "SOCKET_ERROR\n";
+            std::cout << "ERROR: The server has too many client connections.\n";
+            run = false;
+            continue;
         }
         //	If error appeared during receipt and was not caused by shutdown, return DISCONNECT.
         if (result == SOCKET_ERROR)
@@ -94,7 +96,6 @@ void Client::ReceiveFromServer()
             run = false;
             continue;
         }
-
 
         std::cout << buffer << "\n";
         ZeroMemory(buffer, messageSize);

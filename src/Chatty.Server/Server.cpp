@@ -158,14 +158,14 @@ void Server::ReadCommand()
             return;
         }
         // Successful Registration
-        if (clients.size() <= clientCapacity)
+        if (clients.size() < clientCapacity)
         {
             clients.at(*activeSocket)->isRegistered = true;
             clients.at(*activeSocket)->userName = commandArguments[1];
             LogAction({"SERVER: CLIENT", SocketToString(*activeSocket), "REGISTERED AS", commandArguments[1]});
             TcpSendFullMessage(*activeSocket, "SV_SUCCESS");
         }
-        else
+        else if (clients.size() >= clientCapacity)
         {
             // No space, notify client and close connection
             LogAction({"ERROR: CLIENT CAPACITY FULL"});
