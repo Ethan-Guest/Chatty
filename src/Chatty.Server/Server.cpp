@@ -3,8 +3,12 @@
 
 #include "Server.h"
 
+
 bool Server::InitServer()
 {
+    // Create log file
+    GenerateLogFile();
+
     // Initialize winsock
     if (!InitWinsock(true))
     {
@@ -34,6 +38,32 @@ bool Server::InitServer()
     FD_SET(connectionSocket, &masterSet);
 
     return true;
+}
+
+void Server::GenerateLogFile()
+{
+    // Create the log file with unique name
+    time_t curr_time;
+    tm* curr_tm;
+    char time_string[100];
+    time(&curr_time);
+    curr_tm = localtime(&curr_time);
+
+    // Get the year:month:day
+    strftime(time_string, 50, "%F", curr_tm);
+    std::string yymmdd(time_string);
+    serverLogFileName = "server_log-[" + yymmdd + "-";
+
+
+    // Get the hour:minute:second
+    strftime(time_string, 50, "%T", curr_tm);
+    std::string hhmmss(time_string);
+    serverLogFileName += hhmmss + "].txt";
+    std::replace(serverLogFileName.begin(), serverLogFileName.end(), ':', '-'); // replace all ':' with '-'
+
+    // Open the file once to create it
+    std::ofstream out(serverLogFileName, std::ios_base::app);
+    out.close();
 }
 
 void Server::Run()
@@ -279,7 +309,7 @@ void Server::OnClientDisconnect(SOCKET client)
 
 void Server::LogAction(const std::list<std::string>& myArguments)
 {
-    // Print the time
+    // Print the time (ew...)
     time_t curr_time;
     tm* curr_tm;
     char time_string[100];
@@ -289,13 +319,21 @@ void Server::LogAction(const std::list<std::string>& myArguments)
     std::string hhmmss(time_string);
     std::string str;
     str += "[" + hhmmss + "] - ";
+
+    // Concatenate the arguments
     for (auto elem : myArguments)
     {
         str += elem + " ";
     }
     str += "\n";
 
+    // Print the string to console
     std::cout << str;
+
+    // Log the string to server_log.txt
+    std::ofstream out(serverLogFileName, std::ios_base::app);
+    out << str;
+    out.close();
 }
 
 std::string Server::ObjToString(void* param)

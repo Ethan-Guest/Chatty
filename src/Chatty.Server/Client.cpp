@@ -85,7 +85,7 @@ void Client::ReceiveFromServer()
         //	If error appeared during receipt and WAS caused by shutdown, return SHUTDOWN.
         if (result == 0)
         {
-            std::cout << "ERROR: The server has too many client connections.\n";
+            std::cout << "DISCONNCTED FROM SERVER.\n";
             run = false;
             continue;
         }
