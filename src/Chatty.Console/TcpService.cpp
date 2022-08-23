@@ -32,6 +32,7 @@ bool TcpService::InitWinsock(bool serverMode)
     //else
     //{
     //socketAddress.sin_addr.S_un.S_addr = inet_addr(ipAddress); // "127.0.0.1" also works
+    socketAddress.sin_port = htons(port);
     inet_pton(AF_INET, ipAddress, &socketAddress.sin_addr);
     //}
 
@@ -40,7 +41,7 @@ bool TcpService::InitWinsock(bool serverMode)
     //{
     //    std::cout << "ADDRESS_ERROR";
     //}
-    socketAddress.sin_port = htons(port);
+
 
     return true;
 }

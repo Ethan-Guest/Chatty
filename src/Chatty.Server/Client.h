@@ -5,7 +5,7 @@ class Client : public TcpService
 {
 public:
     Client(const char* ipAddress, uint16_t port) :
-        TcpService(ipAddress, port), clientMode(true)
+        TcpService(ipAddress, port), clientMode(true), run(true)
     {
     }
 
@@ -13,11 +13,11 @@ public:
 
     void Run() override; // The main client loop
 
-    void ReadInputLoop();
+    void ReceiveFromServer();
 
 private:
 
     bool clientMode;
     std::string userName; // Cleint username
-    std::atomic<bool> run = true; // Synchronizing bool
+    std::atomic<bool> run; // Synchronizing bool
 };

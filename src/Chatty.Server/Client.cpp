@@ -14,32 +14,26 @@ bool Client::InitClient()
     int result = connect(connectionSocket, (SOCKADDR*)&socketAddress, sizeof(socketAddress));
     if (result == SOCKET_ERROR)
     {
-        std::cout << "ERROR: COULD NOT CONNECT";
+        std::cout << "ERROR: COULD NOT CONNECT\n";
+        closesocket(connectionSocket);
+        WSACleanup();
+        return false;
     }
     else
     {
-        std::cout << "CONNECTED\n";
+        std::cout << "CONNECTED TO SERVER\n";
     }
 }
 
 void Client::Run()
 {
     // Create a thread for reading user input
-    std::thread readInputThread(&Client::ReadInputLoop, this);
+    std::thread readInputThread(&Client::ReceiveFromServer, this);
 
-    // Main loop listens for messages from server
-    while (run.load())
-    {
-        std::cout << "test\n";
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-    }
-}
 
-void Client::ReadInputLoop()
-{
-    while (run.load())
+    while (clientMode)
     {
-        while (clientMode)
+        while (run.load())
         {
             // Get the line from the user
             std::string message;
@@ -55,11 +49,44 @@ void Client::ReadInputLoop()
             strcpy(sendbuffer, messagechar);
 
             // Check that the message is not empty
-            if (std::strlen(messagechar) > 1)
+            if (std::strlen(messagechar) > 0)
             {
-                TcpSendMessage(connectionSocket, (char*)&size, 1);
-                TcpSendMessage(connectionSocket, sendbuffer, size);
+                int result = TcpSendMessage(connectionSocket, (char*)&size, 1);
+                result = TcpSendMessage(connectionSocket, sendbuffer, size);
             }
         }
     }
+    shutdown(connectionSocket, SD_BOTH);
+    closesocket(connectionSocket);
+    // Main loop listens for messages from server
+    //while (run.load())
+    //{
+    //    //std::cout << "test\n";
+    //    //std::this_thread::sleep_for(std::chrono::seconds(3));
+
+    //    int result = TcpRecieveMessage(connectionSocket, (char*)&messageSize, 1);
+    //    result = TcpRecieveMessage(connectionSocket, (char*)buffer, messageSize);
+
+    //}
+    //run.store(false)
+    //readInputThread.join();
+    //ReadInputLoop();
+}
+
+void Client::ReceiveFromServer()
+{
+    while (run.load())
+    {
+        uint8_t size = 0;
+        auto msgBuffer = new char[size];
+        //std::this_thread::sleep_for(std::chrono::seconds(3));
+        //std::cout << "TEST\n";
+        int result = TcpRecieveMessage(connectionSocket, (char*)&size, 1);
+        result = TcpRecieveMessage(connectionSocket, msgBuffer, size);
+        std::cout << msgBuffer;
+        //ZeroMemory(msgBuffer, size);
+
+
+    }
+
 }
