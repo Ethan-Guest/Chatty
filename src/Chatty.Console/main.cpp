@@ -56,8 +56,8 @@ void StartServer()
 }
 void StartClient()
 {
-    //std::string ipAddress = "127.0.0.1";
-    //uint16_t port = 31337;
+    auto ipAddress = "127.0.0.1";
+    uint16_t port = 31337;
 
     //std::cout << "Connect to:\n";
     //std::cout << "IP: ";
@@ -66,9 +66,9 @@ void StartClient()
     //std::cin >> port;
 
 
-    //Client client((char*)&ipAddress, port);
-    //if (client.InitClient())
-    //{
-    //    client.Run();
-    //}
+    Client client(ipAddress, port);
+    if (client.InitClient())
+    {
+        client.Run();
+    }
 }

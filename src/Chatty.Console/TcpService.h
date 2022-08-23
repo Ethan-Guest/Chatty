@@ -1,3 +1,6 @@
+#define _CRT_SECURE_NO_WARNINGS                 // turns of deprecated warnings
+#define _WINSOCK_DEPRECATED_NO_WARNINGS         // turns of deprecated warnings for winsock
+
 #pragma once
 #include <iostream>
 #include <WS2tcpip.h>
@@ -16,7 +19,7 @@ public:
 protected:
 
 	// Initialize the service
-	bool InitWinsock();
+	bool InitWinsock(bool serverMode);
 
 	// Run the service
 	virtual void Run();

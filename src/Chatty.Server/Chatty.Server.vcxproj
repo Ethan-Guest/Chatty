@@ -91,7 +91,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-        <AdditionalIncludeDirectories>..\Chatty.Console</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Chatty.Console</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,21 +126,23 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+        <OptimizeReferences>true</OptimizeReferences>
+        <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Server.cpp" />
-    <ClCompile Include="ServerBackupTwo.cpp" />
-    <ClCompile Include="ServerBackup.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-      <ClInclude Include="ClientProfile.h"/>
-    <ClInclude Include="Server.h" />
-    <ClInclude Include="ServerBackupTwo.h" />
-  </ItemGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+    <ItemGroup>
+        <ClCompile Include="Client.cpp"/>
+        <ClCompile Include="Server.cpp"/>
+        <ClCompile Include="ServerBackupTwo.cpp"/>
+        <ClCompile Include="ServerBackup.cpp"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ClInclude Include="Client.h"/>
+        <ClInclude Include="ClientProfile.h"/>
+        <ClInclude Include="Server.h"/>
+        <ClInclude Include="ServerBackupTwo.h"/>
+    </ItemGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+    <ImportGroup Label="ExtensionTargets">
+    </ImportGroup>
 </Project>

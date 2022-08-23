@@ -6,7 +6,7 @@
 bool Server::InitServer()
 {
     // Initialize winsock
-    if (!InitWinsock())
+    if (!InitWinsock(true))
     {
         return false;
     }
