@@ -4,8 +4,9 @@
 class Client : public TcpService
 {
 public:
+    Client();
     Client(const char* ipAddress, uint16_t port) :
-        TcpService(ipAddress, port), clientMode(true), run(true)
+        TcpService(ipAddress, port), clientMode(true)
     {
     }
 
@@ -19,5 +20,5 @@ private:
 
     bool clientMode;
     std::string userName; // Cleint username
-    std::atomic<bool> run; // Synchronizing bool
+    SOCKET broadcastSocket; // The socket used for receiving broadcast information from server
 };

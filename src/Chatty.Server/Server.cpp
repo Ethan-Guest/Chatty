@@ -2,6 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "Server.h"
+#include <Helper.h>
 
 
 bool Server::InitServer()
@@ -15,7 +16,7 @@ bool Server::InitServer()
         return false;
     }
 
-    // Bind the socket to the ip address
+    // Bind the TCP socket to the ip address
     if (bind(connectionSocket, (SOCKADDR*)&socketAddress, sizeof(socketAddress)) == SOCKET_ERROR)
     {
         // Binding error
@@ -37,6 +38,20 @@ bool Server::InitServer()
     FD_ZERO(&readySet);
     FD_SET(connectionSocket, &masterSet);
 
+    // UDP Broadcast
+    // 
+    // Create UDP socket
+    broadcastSocket = socket(AF_INET, SOCK_DGRAM, 0);
+
+    int optVal = 1;
+    setsockopt(broadcastSocket, SOL_SOCKET, SO_BROADCAST, (char*)&optVal, sizeof(optVal));
+
+    // Bind the UDP socket
+    if (bind(broadcastSocket, (SOCKADDR*)&socketAddress, sizeof(socketAddress)) == SOCKET_ERROR)
+    {
+        // Binding error
+        return false;
+    }
     return true;
 }
 
@@ -68,113 +83,128 @@ void Server::GenerateLogFile()
 
 void Server::Run()
 {
+    // Create new thread for broadcasting TCP information
+    std::thread broadcastTCPMessage(&Server::BroadcastMessage, this);
+
     while (serverMode)
     {
-        // Copy original set
-        readySet = masterSet;
-
-        // 1 second timeout
-        TIMEVAL	timeout;
-        timeout.tv_sec = 1;
-
-        // Select incoming sockets
-        int readySockets = select(0, &readySet, nullptr, nullptr, &timeout);
-
-        // Loop through ready sockets
-        for (int i = 0; i < readySockets; i++)
+        while (run.load())
         {
-            SOCKET communicationSocket = readySet.fd_array[i];
-            activeSocket = &communicationSocket;
+            // Copy original set
+            readySet = masterSet;
 
+            // 1 second timeout
+            TIMEVAL timeout;
+            timeout.tv_sec = 1;
 
-            // Check if listening socket is SET and accept new connection
-            if (FD_ISSET(connectionSocket, &readySet))
+            // Select incoming sockets
+            int readySockets = select(0, &readySet, nullptr, nullptr, &timeout);
+
+            // Loop through ready sockets
+            for (int i = 0; i < readySockets; i++)
             {
-                // Accept a new connection
-                SOCKET client = accept(connectionSocket, nullptr, nullptr);
+                SOCKET communicationSocket = readySet.fd_array[i];
+                activeSocket = &communicationSocket;
 
-                // add the new connection to the list of connected clients
-                FD_SET(client, &masterSet);
 
-                OnClientConnect(client);
-            }
-            else
-            {
-                // Accept new message
-                
-                // Receive the size of the message
-                int bytes = TcpRecieveMessage(communicationSocket, (char*)&messageSize, 1);
-
-                // Set the buffer size
-                buffer = new char[messageSize];
-
-                // If receive failed
-                if (bytes <= 0)
+                // Check if listening socket is SET and accept new connection
+                if (FD_ISSET(connectionSocket, &readySet))
                 {
-                    // Close connection
-                    OnClientDisconnect(communicationSocket);
+                    // Accept a new connection
+                    SOCKET client = accept(connectionSocket, nullptr, nullptr);
 
-                    // Clear the buffer and continue
+
+                    OnClientConnect(client);
+                }
+                else
+                {
+                    // Accept new message
+
+                    // Receive the size of the message
+                    int bytes = TcpRecieveMessage(communicationSocket, (char*)&messageSize, 1);
+
+                    // Set the buffer size
+                    buffer = new char[messageSize];
+
+                    // If receive failed
+                    if (bytes <= 0)
+                    {
+                        // Close connection
+                        OnClientDisconnect(communicationSocket);
+
+                        // Clear the buffer and continue
+                        ZeroMemory(buffer, messageSize);
+                        continue;
+                    }
+
+                    // Receive the incoming data
+                    bytes = TcpRecieveMessage(communicationSocket, buffer, messageSize);
+                    if (bytes <= 0)
+                    {
+                        std::string activeSocketStr = SocketToString(*activeSocket);
+                        LogAction({"ERROR: FAILED TO READ INCOMING MESSAGE FROM CLIENT", activeSocketStr});
+                    }
+                    if (buffer[0] == '$')
+                    {
+                        ReadCommand();
+                    }
+                    // If the user is registered, read the message. 
+                    else if (clients.at(communicationSocket)->isRegistered)
+                    {
+                        LogAction({clients.at(*activeSocket)->userName, ":", buffer});
+                    }
+                    // If not, reject the message and notify them.
+                    else if (!clients.at(communicationSocket)->isRegistered)
+                    {
+                        TcpSendFullMessage(*activeSocket,
+                                           "ERROR: Please use $register <username> before sending messages.");
+                    }
+
+                    // Clear the buffer
                     ZeroMemory(buffer, messageSize);
-                    continue;
                 }
-
-                // Receive the incoming data
-                bytes = TcpRecieveMessage(communicationSocket, buffer, messageSize);
-                if (bytes <= 0)
-                {
-                    std::string activeSocketStr = SocketToString(*activeSocket);
-                    LogAction({"ERROR: FAILED TO READ INCOMING MESSAGE FROM CLIENT", activeSocketStr});
-                }
-                if (buffer[0] == '$')
-                {
-                    ReadCommand();
-                }
-                // If the user is registered, read the message. 
-                else if (clients.at(communicationSocket)->isRegistered)
-                {
-                    LogAction({clients.at(*activeSocket)->userName, ":", buffer});
-                }
-                // If not, reject the message and notify them.
-                else if (!clients.at(communicationSocket)->isRegistered)
-                {
-                    TcpSendFullMessage(*activeSocket,
-                                       "ERROR: Please use $register <username> before sending messages.");
-                }
-
-                // Clear the buffer
-                ZeroMemory(buffer, messageSize);
             }
         }
+    }
+    // Close the thread
+    run.store(false);
+    broadcastTCPMessage.join();
+}
+
+void Server::BroadcastMessage()
+{
+    // Message to broadcast
+    std::string broadcastMessage = "127.0.0.1 31337";
+
+    // Create the broadcast socket address
+    sockaddr_in broadcastAddress;
+    broadcastAddress.sin_family = AF_INET;
+    broadcastAddress.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    broadcastAddress.sin_port = htons(port);
+
+    // Broadcast the message once per second
+    while (run.load())
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cout << "BROADCASTING ON: " + broadcastMessage + "\n";
+        int result =
+            sendto(broadcastSocket, broadcastMessage.c_str(), broadcastMessage.size() + 1, 0,
+                   (sockaddr*)&broadcastAddress, sizeof(broadcastAddress));
     }
 }
 
 void Server::ReadCommand()
 {
-    // Convert the command to a string
-    std::string command(buffer);
+    auto args = Helper::CharPtrToVector(buffer, ' ', true);
 
-    // Convert to lowercase
-    std::transform(command.begin(), command.end(), command.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-
-    // Convert to collection of strings (required for commands with multiple parameters)
-    std::vector<std::string> commandArguments;
-    std::stringstream commandStream(command);
-    std::string arg;
-    while (std::getline(commandStream, arg, ' '))
-    {
-        commandArguments.push_back(arg);
-    }
-
-    if (commandArguments[0] == "$register")
+    if (args[0] == "$register")
     {
         if (clients.at(*activeSocket)->isRegistered == true)
         {
             TcpSendFullMessage(*activeSocket, "ERROR: You are already registered.");
             return;
         }
-        if (commandArguments.size() <= 1)
+        if (args.size() <= 1)
         {
             // Notify the user that no name is provided
             std::string activeSocketStr = SocketToString(*activeSocket);
@@ -186,8 +216,8 @@ void Server::ReadCommand()
         if (clients.size() <= clientCapacity)
         {
             clients.at(*activeSocket)->isRegistered = true;
-            clients.at(*activeSocket)->userName = commandArguments[1];
-            LogAction({"SERVER: CLIENT", SocketToString(*activeSocket), "REGISTERED AS", commandArguments[1]});
+            clients.at(*activeSocket)->userName = args[1];
+            LogAction({"SERVER: CLIENT", SocketToString(*activeSocket), "REGISTERED AS", args[1]});
             TcpSendFullMessage(*activeSocket, "SV_SUCCESS");
         }
         else if (clients.size() > clientCapacity)
@@ -201,7 +231,7 @@ void Server::ReadCommand()
         }
     }
 
-    else if (commandArguments[0] == "$getlist")
+    else if (args[0] == "$getlist")
     {
         // If the client is registered
         if (clients.at(*activeSocket)->isRegistered)
@@ -259,18 +289,18 @@ void Server::ReadCommand()
             TcpSendFullMessage(*activeSocket, "Please register with $register before using $getlist.");
         }
     }
-    else if (commandArguments[0] == "$help")
+    else if (args[0] == "$help")
     {
         TcpSendFullMessage(*activeSocket,
                            "Server commands:\n$register <username> - Registers a client.\n$getlist - Get a list of all other connected clients.\n$getlog - Get a log of all server actions and messages.\n$exit - Close the connection to the server.\n");
     }
 
-    if (commandArguments[0] == "$exit")
+    if (args[0] == "$exit")
     {
         // Close connection
         OnClientDisconnect(*activeSocket);
     }
-    else if (commandArguments[0] == "$getlog")
+    else if (args[0] == "$getlog")
     {
         // Check if the client is registered
         if (clients.at(*activeSocket)->isRegistered)
@@ -306,6 +336,9 @@ void Server::ReadCommand()
 
 void Server::OnClientConnect(SOCKET client)
 {
+    // add the new connection to the list of connected clients
+    FD_SET(client, &masterSet);
+
     // Add the un-registered client to the collection of clients
     clients.insert({client, new ClientProfile()});
 

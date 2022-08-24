@@ -14,7 +14,7 @@ bool TcpService::InitWinsock(bool serverMode)
     std::cout << "[" << "00:00:00" << "] - WINSOCK INITIALIZED\n";
 
 
-    // Create a listening socket
+    // Create a TCP listening socket
     connectionSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (connectionSocket == INVALID_SOCKET)
     {
@@ -25,23 +25,8 @@ bool TcpService::InitWinsock(bool serverMode)
 
     // Initialize socket address
     socketAddress.sin_family = AF_INET;
-    //if (serverMode)
-    //{
-    //    socketAddress.sin_addr.S_un.S_addr = INADDR_ANY;
-    //}
-    //else
-    //{
-    //socketAddress.sin_addr.S_un.S_addr = inet_addr(ipAddress); // "127.0.0.1" also works
     socketAddress.sin_port = htons(port);
     inet_pton(AF_INET, ipAddress, &socketAddress.sin_addr);
-    //}
-
-    // If address is not in dotted-quadrant format, return ADDRESS_ERROR. 
-    //if (socketAddress.sin_addr.S_un.S_addr == INADDR_NONE)
-    //{
-    //    std::cout << "ADDRESS_ERROR";
-    //}
-
 
     return true;
 }

@@ -5,6 +5,8 @@
 #include <iostream>
 #include <WS2tcpip.h>
 #include <ctime>
+#include <thread>
+#include <atomic>
 
 #pragma comment (lib, "ws2_32.lib")
 
@@ -13,8 +15,10 @@ class TcpService {
 public:
 
 	// Service constructor
-	TcpService(const char* _ipAddress, int _port) : 
-		ipAddress(_ipAddress), port(_port) { }
+	TcpService(const char* _ipAddress, int _port) :
+		ipAddress(_ipAddress), port(_port), run(true)
+	{
+	}
 
 protected:
 
@@ -34,9 +38,13 @@ protected:
 	SOCKADDR_IN			socketAddress;	  // The socket address
 	uint16_t messageSize;
 	char*				buffer;
+	std::atomic<bool> run; // Synchronizing bool
+
+	const char* ipAddress;
+	uint16_t port;
 
 private:
 
-	const char*			ipAddress;
-	uint16_t port;
+
+
 };
