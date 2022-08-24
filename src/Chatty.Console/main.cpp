@@ -57,45 +57,36 @@ void StartServer()
 
 bool UDPClient()
 {
-    // Initialize winsock
-    WSADATA wsadata;
-    if (WSAStartup(WINSOCK_VERSION, &wsadata) != 0)
-    {
-        // TODO: Winsock startup error
-        return false;
-    }
-    std::cout << "[" << "00:00:00" << "] - WINSOCK INITIALIZED\n";
+    //// Initialize winsock
+    //WSADATA wsadata;
+    //if (WSAStartup(WINSOCK_VERSION, &wsadata) != 0)
+    //{
+    //    // TODO: Winsock startup error
+    //    return false;
+    //}
+    //std::cout << "[" << "00:00:00" << "] - WINSOCK INITIALIZED\n";
 
-    // Create a UDP socket
-    SOCKET listening = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    //// Create a UDP socket
+    //SOCKET in = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-    // Create a client sockaddr
-    sockaddr_in clientAddr;
-    clientAddr.sin_addr.S_un.S_addr = ADDR_ANY;
-    clientAddr.sin_family = AF_INET;
-    clientAddr.sin_port = htons(31337);
+    //// Create a client sockaddr
+    //sockaddr_in clientAddr;
+    //clientAddr.sin_addr.S_un.S_addr = ADDR_ANY;
+    //clientAddr.sin_family = AF_INET;
+    //clientAddr.sin_port = htons(31337);
 
-    // Bind the socket to the IP and port
-    if (bind(listening, (sockaddr*)&clientAddr, sizeof(clientAddr)) == SOCKET_ERROR)
-    {
-        std::cout << "ERROR: CANT BIND SOCKET." << WSAGetLastError() + "\n";
-        return false;
-    }
+    //// Bind the socket to the IP and port
+    //if (bind(listening, (sockaddr*)&clientAddr, sizeof(clientAddr)) == SOCKET_ERROR)
+    //{
+    //    std::cout << "ERROR: CANT BIND SOCKET." << WSAGetLastError() + "\n";
+    //    return false;
+    //}
     return true;
 }
 void StartClient()
 {
-    auto ipAddress = "";
-    uint16_t port = 0;
-
-    //std::cout << "Connect to:\n";
-    //std::cout << "IP: ";
-    //std::cin >> ipAddress;
-    //std::cout << "PORT: ";
-    //std::cin >> port;
-
-
-
+    auto ipAddress = "127.0.0.1";
+    uint16_t port = 31337;
 
     Client client(ipAddress, port);
     if (client.InitClient())

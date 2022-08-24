@@ -7,7 +7,7 @@
 namespace Helper
 {
     // Converts a char* to a vector of words
-    std::vector<std::string> CharPtrToVector(char* string, char delimiter, bool lowercase)
+    static std::vector<std::string> CharPtrToVector(char* string, char delimiter, bool lowercase)
     {
         // Convert the command to a string
         std::string command(string);
