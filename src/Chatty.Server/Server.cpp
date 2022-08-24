@@ -16,6 +16,8 @@ bool Server::InitServer()
         return false;
     }
 
+    // TCP SETUP
+    // 
     // Bind the TCP socket to the ip address
     if (bind(connectionSocket, (SOCKADDR*)&socketAddress, sizeof(socketAddress)) == SOCKET_ERROR)
     {
@@ -38,26 +40,25 @@ bool Server::InitServer()
     FD_ZERO(&readySet);
     FD_SET(connectionSocket, &masterSet);
 
-    // UDP Broadcast
+    // UDP BROADCAST SETUP
     // 
-    // Create UDP socket
-    //broadcastSocket = socket(AF_INET, SOCK_DGRAM, 0);
+    // CREATE UDP SOCKET
+    broadcastSocket = socket(AF_INET, SOCK_DGRAM, 0);
 
-    // Set the structure
-    //sockaddr_in server;
-    //server.sin_family = AF_INET; // AF_INET = IPv4 addresses
-    //server.sin_port = htons(31337); // Little to big endian conversion
-    //inet_pton(AF_INET, "127.0.0.1", &server.sin_addr); // Convert from string to byte array
+    // UDP BROADCAST OUTPUT STRUCTURE
+    broadcastAddr.sin_family = AF_INET; // AF_INET = IPv4 addresses
+    broadcastAddr.sin_port = htons(31337); // Little to big endian conversion
+    inet_pton(AF_INET, "127.0.0.1", &broadcastAddr.sin_addr); // Convert from string to byte array
 
-    //int optVal = 1;
-    //setsockopt(broadcastSocket, SOL_SOCKET, SO_BROADCAST, (char*)&optVal, sizeof(optVal));
+    int optVal = 1;
+    setsockopt(broadcastSocket, SOL_SOCKET, SO_BROADCAST, (char*)&optVal, sizeof(optVal));
 
-    //// Bind the UDP socket
-    //if (bind(broadcastSocket, (SOCKADDR*)&server, sizeof(server)) == SOCKET_ERROR)
-    //{
-    //    // Binding error
-    //    return false;
-    //}
+    // Bind the UDP socket to the outputAddr
+    if (bind(broadcastSocket, (SOCKADDR*)&broadcastAddr, sizeof(broadcastAddr)) == SOCKET_ERROR)
+    {
+        // Binding error
+        return false;
+    }
     return true;
 }
 
@@ -182,11 +183,11 @@ void Server::BroadcastMessage()
     // Message to broadcast
     std::string broadcastMessage = "127.0.0.1 31337";
 
-    // Create the broadcast socket address
-    sockaddr_in broadcastAddress;
-    broadcastAddress.sin_family = AF_INET;
-    broadcastAddress.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-    broadcastAddress.sin_port = htons(31337);
+    //// Create the broadcast socket address
+    //sockaddr_in broadcastAddress;
+    //broadcastAddress.sin_family = AF_INET;
+    //broadcastAddress.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    //broadcastAddress.sin_port = htons(31337);
 
     // Broadcast the message once per second
     while (run.load())
@@ -195,7 +196,7 @@ void Server::BroadcastMessage()
         std::cout << "BROADCASTING ON: " + broadcastMessage + "\n";
         int result =
             sendto(broadcastSocket, broadcastMessage.c_str(), broadcastMessage.size() + 1, 0,
-                   (sockaddr*)&broadcastAddress, sizeof(broadcastAddress));
+                   (sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
     }
 }
 

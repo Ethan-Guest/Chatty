@@ -97,7 +97,6 @@ void Client::Run()
 
     while (clientMode)
     {
-
         while (run.load())
         {
             // Get the line from the user

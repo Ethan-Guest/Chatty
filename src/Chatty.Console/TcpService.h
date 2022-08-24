@@ -36,6 +36,8 @@ protected:
 
 	SOCKET				connectionSocket; // The listening / connection socket
 	SOCKADDR_IN			socketAddress;	  // The socket address
+	SOCKADDR_IN broadcastAddr;
+
 	uint16_t messageSize;
 	char*				buffer;
 	std::atomic<bool> run; // Synchronizing bool
