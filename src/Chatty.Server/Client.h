@@ -11,14 +11,13 @@ public:
 
     bool InitClient(); // Initialize the client
 
-    bool AwaitUdpBroadcast();
-
     void Run() override; // The main client loop
 
-    void ReceiveFromServer();
+    void ReceiveFromServer(); // Receive data from the server
 
 private:
-    const char* tcpIpAddress;
-    bool clientMode;
+    bool clientMode; // Used for winsock startup, indicates that a UDP connection 
+    //must be received before attempting TCP connection
+
     std::string userName; // Cleint username
 };

@@ -9,6 +9,7 @@ bool Client::InitClient()
         return false;
     }
 
+    // Connect to server
     int result = connect(connectionSocket, (SOCKADDR*)&socketAddress, sizeof(socketAddress));
     if (result == SOCKET_ERROR)
     {
@@ -17,10 +18,7 @@ bool Client::InitClient()
         WSACleanup();
         return false;
     }
-    else
-    {
-        std::cout << "CONNECTED TO SERVER\nType $help to get started.\n";
-    }
+    std::cout << "CONNECTED TO SERVER\nType $help to get started.\n";
     return true;
 }
 
@@ -31,10 +29,8 @@ void Client::Run()
 
     while (clientMode)
     {
-
         while (run.load())
         {
-
             // Get the line from the user
             std::string message;
             std::getline(std::cin, message);
@@ -65,6 +61,9 @@ void Client::Run()
     // Close the connection
     shutdown(connectionSocket, SD_BOTH);
     closesocket(connectionSocket);
+    closesocket(broadcastSocket);
+
+    WSACleanup();
 }
 
 void Client::ReceiveFromServer()
@@ -84,6 +83,7 @@ void Client::ReceiveFromServer()
         {
             std::cout << "DISCONNCTED FROM SERVER.\n";
             run = false;
+            clientMode = false;
             continue;
         }
         //	If error appeared during receipt and was not caused by shutdown, return DISCONNECT.
@@ -94,8 +94,8 @@ void Client::ReceiveFromServer()
             continue;
         }
 
+        // Write the received message to console and clear the buffer for re-use
         std::cout << buffer << "\n";
         ZeroMemory(buffer, messageSize);
     }
-
 }

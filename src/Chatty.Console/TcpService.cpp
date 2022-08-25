@@ -1,4 +1,3 @@
-
 #include "TcpService.h"
 #include "Helper.h"
 
@@ -9,24 +8,30 @@ bool TcpService::InitWinsock(bool clientStartup)
     WSADATA wsadata;
     if (WSAStartup(WINSOCK_VERSION, &wsadata) != 0)
     {
-        // TODO: Winsock startup error
+        std::cout << "[STARTUP] - ERROR: WINSOCK COULD NOT START\n";
         return false;
     }
-    std::cout << "[" << "00:00:00" << "] - WINSOCK INITIALIZED\n";
+    std::cout << "[STARTUP] - WINSOCK INITIALIZED\n";
 
+    // If the client startup mode is active, await broadcast from server
     if (clientStartup)
     {
-        // If the client startup mode is active, await broadcast from server
         if (!ClientBroadcastReceive())
         {
             // Client could not receive broadcast
+            std::cout << "[STARTUP] - ERROR: ERROR RECEIVING TCP INFORMATION FROM SERVER\n";
             return false;
         }
     }
 
+    // Get ip and port from broadcast message (client only)
     std::vector<std::string> ipAndPort = Helper::StringToVector(broadcastReceiveMessage, ' ', false);
-    ipAddress = ipAndPort[0].c_str();
-    port = std::stoi(ipAndPort[1]);
+    if (clientStartup)
+    {
+        ipAddress = ipAndPort[0].c_str();
+        port = std::stoi(ipAndPort[1]);
+    }
+
 
     // Create a TCP listening socket
     connectionSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -38,8 +43,6 @@ bool TcpService::InitWinsock(bool clientStartup)
     std::cout << ipAddress << std::endl;
     std::cout << "[" << "00:00:00" << "] - LISTENING SOCKET CREATED\n";
 
-    ipAddress = "127.0.0.1";
-
     // Initialize socket address
     socketAddress.sin_family = AF_INET;
     socketAddress.sin_port = htons(port);
@@ -50,7 +53,6 @@ bool TcpService::InitWinsock(bool clientStartup)
 
 void TcpService::Run()
 {
-    
 }
 
 bool TcpService::ClientBroadcastReceive()
@@ -58,25 +60,28 @@ bool TcpService::ClientBroadcastReceive()
     // Create UDP socket
     broadcastSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
+    // UDP socket structure
+    sockaddr_in clientAddr;
+    clientAddr.sin_addr.S_un.S_addr = ADDR_ANY; // Us any IP address available on the machine
+    clientAddr.sin_family = AF_INET; // Address format is IPv4
+    clientAddr.sin_port = htons(31337); // Convert from little to big endian
 
-    sockaddr_in serverHint;
-    serverHint.sin_addr.S_un.S_addr = ADDR_ANY; // Us any IP address available on the machine
-    serverHint.sin_family = AF_INET; // Address format is IPv4
-    serverHint.sin_port = htons(31337); // Convert from little to big endian
-
-    // Try and bind the socket to the IP and port
-    if (bind(broadcastSocket, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
+    // Try to bind the socket to the IP and port
+    if (bind(broadcastSocket, (sockaddr*)&clientAddr, sizeof(clientAddr)) == SOCKET_ERROR)
     {
-        std::cout << "Can't bind socket! " << WSAGetLastError() << std::endl;
+        std::cout << "[STARTUP] - ERROR: COULD NOT BIND UDP SOCKET\n";
         return false;
     }
 
-    sockaddr_in serverInfo; // Store server information (port / ip address)
-    int serverLength = sizeof(serverInfo); // The size of the client information
+    // Structure for UDP server connection
+    sockaddr_in serverInfo;
+    int serverLength = sizeof(serverInfo);
 
+    // Create a buffer for receiving message from server
     char receiveBuffer[16];
 
-    std::cout << "Waiting connection from server...\n";
+    std::cout << "WAITING FOR SERVER...\n";
+
     // Loop until a UDP connection is established
     while (true)
     {
@@ -86,36 +91,25 @@ bool TcpService::ClientBroadcastReceive()
         // Clear the receive buffer
         ZeroMemory(receiveBuffer, 16);
 
-        // Wait for message
+        // Wait for message from broadcast socket
         int result = recvfrom(broadcastSocket, receiveBuffer, 16, 0, (sockaddr*)&serverInfo, &serverLength);
         if (result == SOCKET_ERROR)
         {
+            std::cout << "[STARTUP] - ERROR: COULD NOT RECEIVE MESSAGE FROM SERVER\n";
             continue;
         }
 
         if (result > 0)
         {
             // Read the message
-
-            std::cout << "Message recv" << receiveBuffer << std::endl;
-
+            std::cout << "[STARTUP] - BROADCAST MESSAGE RECEIVED FROM SERVER\n";
             std::string message(receiveBuffer);
-
             broadcastReceiveMessage = message;
 
-
+            // Close the UDP socket, allowing other clients to connect
             closesocket(broadcastSocket);
             return true;
         }
-        // Display message and client info
-        //char clientIp[256]; // Convert the address byte array to string of characters
-        //ZeroMemory(clientIp, 256);
-
-        //// Convert from byte array to chars
-        //inet_ntop(AF_INET, &serverInfo.sin_addr, clientIp, 256);
-
-
-        // Display the message / who sent it
     }
     return false;
 }
@@ -160,7 +154,8 @@ int TcpService::TcpRecieveMessage(SOCKET socket, char* buf, int length)
         if (ret < 1)
             return ret;
         total += ret;
-    } while (total < length);
+    }
+    while (total < length);
 
     return total;
 }

@@ -13,6 +13,7 @@ bool Server::InitServer()
     // Initialize winsock
     if (!InitWinsock(false))
     {
+        LogAction({"SERVER:", "ERROR: COULD NOT INITIALIZE WINSOCK. SHUTTING DOWN"});
         return false;
     }
 
@@ -22,6 +23,7 @@ bool Server::InitServer()
     if (bind(connectionSocket, (SOCKADDR*)&socketAddress, sizeof(socketAddress)) == SOCKET_ERROR)
     {
         // Binding error
+        LogAction({"SERVER:", "ERROR: SERVER COULD NOT BIND. SHUTTING DOWN"});
         return false;
     }
     LogAction({"SERVER:", "LISTENING SOCKET BINDING SUCCESSFUL"});
@@ -30,6 +32,7 @@ bool Server::InitServer()
     if (listen(connectionSocket, SOMAXCONN) == SOCKET_ERROR)
     {
         // Listening error
+        LogAction({"SERVER:", "ERROR: LISTENING SOCKET FAILED. SHUTTING DOWN"});
         return false;
     }
 
@@ -40,7 +43,6 @@ bool Server::InitServer()
     FD_ZERO(&readySet);
     FD_SET(connectionSocket, &masterSet);
 
-    
     return true;
 }
 
@@ -57,7 +59,6 @@ void Server::GenerateLogFile()
     strftime(time_string, 50, "%F", curr_tm);
     std::string yymmdd(time_string);
     serverLogFileName = "server_log-[" + yymmdd + "-";
-
 
     // Get the hour:minute:second
     strftime(time_string, 50, "%T", curr_tm);
@@ -102,7 +103,6 @@ void Server::Run()
                     // Accept a new connection
                     SOCKET client = accept(connectionSocket, nullptr, nullptr);
 
-
                     OnClientConnect(client);
                 }
                 else
@@ -130,7 +130,7 @@ void Server::Run()
                     bytes = TcpRecieveMessage(communicationSocket, buffer, messageSize);
                     if (bytes <= 0)
                     {
-                        std::string activeSocketStr = SocketToString(*activeSocket);
+                        std::string activeSocketStr = Helper::SocketToString(*activeSocket);
                         LogAction({"ERROR: FAILED TO READ INCOMING MESSAGE FROM CLIENT", activeSocketStr});
                     }
                     if (buffer[0] == '$')
@@ -155,6 +155,13 @@ void Server::Run()
             }
         }
     }
+
+    // Close sockets and cleanup
+    closesocket(connectionSocket);
+    closesocket(broadcastSocket);
+
+    WSACleanup();
+
     // Close the thread
     run.store(false);
     broadcastTCPMessage.join();
@@ -172,8 +179,8 @@ void Server::BroadcastMessage()
     setsockopt(broadcastSocket, SOL_SOCKET, SO_BROADCAST, (char*)&optVal, sizeof(optVal));
 
     // UDP BROADCAST OUTPUT STRUCTURE
-    broadcastAddr.sin_family = AF_INET; // AF_INET = IPv4 addresses
-    broadcastAddr.sin_port = htons(port); // Little to big endian conversion
+    broadcastAddr.sin_family = AF_INET;
+    broadcastAddr.sin_port = htons(port);
     broadcastAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 
     // Message to broadcast
@@ -182,8 +189,11 @@ void Server::BroadcastMessage()
     // Broadcast the message once per second
     while (run.load())
     {
+        // Wait one second
         std::this_thread::sleep_for(std::chrono::seconds(1));
         std::cout << "BROADCASTING ON: " + broadcastMessage + "\n";
+
+        // Send broadcast message
         int result =
             sendto(broadcastSocket, broadcastMessage.c_str(), broadcastMessage.size() + 1, 0,
                    (sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
@@ -192,19 +202,23 @@ void Server::BroadcastMessage()
 
 void Server::ReadCommand()
 {
+    // Split the user input to multiple strings
     auto args = Helper::CharPtrToVector(buffer, ' ', true);
 
+    // A client tries to register
     if (args[0] == "$register")
     {
+        // If the client is already registered, disallow
         if (clients.at(*activeSocket)->isRegistered == true)
         {
             TcpSendFullMessage(*activeSocket, "ERROR: You are already registered.");
             return;
         }
+        // If no name was provided
         if (args.size() <= 1)
         {
             // Notify the user that no name is provided
-            std::string activeSocketStr = SocketToString(*activeSocket);
+            std::string activeSocketStr = Helper::SocketToString(*activeSocket);
             LogAction({"ERROR: CLIENT", activeSocketStr, "USED $REGISTER BUT DID NOT PROVIDE A NAME."});
             TcpSendFullMessage(*activeSocket, "ERROR: Please provide a username with $register <username>");
             return;
@@ -214,9 +228,10 @@ void Server::ReadCommand()
         {
             clients.at(*activeSocket)->isRegistered = true;
             clients.at(*activeSocket)->userName = args[1];
-            LogAction({"SERVER: CLIENT", SocketToString(*activeSocket), "REGISTERED AS", args[1]});
+            LogAction({"SERVER: CLIENT", Helper::SocketToString(*activeSocket), "REGISTERED AS", args[1]});
             TcpSendFullMessage(*activeSocket, "SV_SUCCESS");
         }
+        // If the server is full
         else if (clients.size() > clientCapacity)
         {
             // No space, notify client
@@ -228,25 +243,27 @@ void Server::ReadCommand()
         }
     }
 
+    // A client requests the list of connected users
     else if (args[0] == "$getlist")
     {
         // If the client is registered
         if (clients.at(*activeSocket)->isRegistered)
         {
+            LogAction({"SERVER: CLIENT", Helper::SocketToString(*activeSocket), "USED $GETLIST"});
+
             std::string message;
             if (clients.size() <= 1)
             {
                 message = "You are the only client connected.";
-
                 TcpSendFullMessage(*activeSocket, message);
             }
             else
             {
-                // Construct a message out of the clients collection
+                // Construct a message out of the connected clients collection
                 for (const auto& x : clients)
                 {
                     // The clients socket
-                    std::string socketId = SocketToString(x.first);
+                    std::string socketId = Helper::SocketToString(x.first);
 
                     // The clients username
                     std::string userName;
@@ -282,21 +299,18 @@ void Server::ReadCommand()
         // If the user is not registered
         else
         {
-            LogAction({"ERROR: CLIENT", SocketToString(*activeSocket), "USED $GETLIST BUT IS NOT REGISTERED."});
+            LogAction({"ERROR: CLIENT", Helper::SocketToString(*activeSocket), "USED $GETLIST BUT IS NOT REGISTERED."});
             TcpSendFullMessage(*activeSocket, "Please register with $register before using $getlist.");
         }
     }
+    // Send a help info message
     else if (args[0] == "$help")
     {
         TcpSendFullMessage(*activeSocket,
                            "Server commands:\n$register <username> - Registers a client.\n$getlist - Get a list of all other connected clients.\n$getlog - Get a log of all server actions and messages.\n$exit - Close the connection to the server.\n");
     }
 
-    if (args[0] == "$exit")
-    {
-        // Close connection
-        OnClientDisconnect(*activeSocket);
-    }
+    // The client requests a log of the server actions
     else if (args[0] == "$getlog")
     {
         // Check if the client is registered
@@ -315,20 +329,23 @@ void Server::ReadCommand()
                 std::istringstream stringStream(currentLine);
                 TcpSendFullMessage(*activeSocket, currentLine);
             }
-            LogAction({"CLIENT", SocketToString(*activeSocket), "USED $GETLOG"});
+            LogAction({"CLIENT", Helper::SocketToString(*activeSocket), "USED $GETLOG"});
         }
+        // The client used $getlog but was not registered
         else
         {
-            LogAction({"ERROR: CLIENT", SocketToString(*activeSocket), "USED $GETLOG BUT IS NOT REGISTERED."});
+            LogAction({"ERROR: CLIENT", Helper::SocketToString(*activeSocket), "USED $GETLOG BUT IS NOT REGISTERED."});
             TcpSendFullMessage(*activeSocket, "Please register with $register before using $getlog.");
         }
     }
-    // Not a valid command, reject and notify client
-    else
+
+    // The client exits the server
+    else if (args[0] == "$exit")
     {
+        // Close connection
+        OnClientDisconnect(*activeSocket);
     }
 }
-
 
 
 void Server::OnClientConnect(SOCKET client)
@@ -340,7 +357,7 @@ void Server::OnClientConnect(SOCKET client)
     clients.insert({client, new ClientProfile()});
 
     // Write to console + log
-    std::string clientStr = SocketToString(client);
+    std::string clientStr = Helper::SocketToString(client);
     LogAction({"CLIENT", clientStr, "CONNECTED"});
 }
 
@@ -350,7 +367,7 @@ void Server::OnClientDisconnect(SOCKET client)
     clients.erase(client);
 
     // Log client disconnect
-    std::string clientStr = SocketToString(client);
+    std::string clientStr = Helper::SocketToString(client);
     LogAction({"CLIENT", clientStr, "DISCONNECTED"});
 
     // Close the connection
@@ -386,20 +403,4 @@ void Server::LogAction(const std::list<std::string>& myArguments)
     std::ofstream out(serverLogFileName, std::ios_base::app);
     out << str;
     out.close();
-}
-
-std::string Server::ObjToString(void* param)
-{
-    std::stringstream stringstream;
-    stringstream << param;
-    return stringstream.str();
-
-}
-
-std::string Server::SocketToString(SOCKET s)
-{
-    std::stringstream stringstream;
-    stringstream << s;
-    return stringstream.str();
-
 }

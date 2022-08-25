@@ -51,4 +51,10 @@ namespace Helper
         return commandArguments;
     }
 
+    static std::string SocketToString(SOCKET s)
+    {
+        std::stringstream stringstream;
+        stringstream << s;
+        return stringstream.str();
+    }
 }
