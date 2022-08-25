@@ -40,8 +40,7 @@ bool TcpService::InitWinsock(bool clientStartup)
         // Socket creation error
         return false;
     }
-    std::cout << ipAddress << std::endl;
-    std::cout << "[" << "00:00:00" << "] - LISTENING SOCKET CREATED\n";
+    std::cout << "[STARTUP] - LISTENING SOCKET CREATED\n";
 
     // Initialize socket address
     socketAddress.sin_family = AF_INET;
@@ -80,7 +79,7 @@ bool TcpService::ClientBroadcastReceive()
     // Create a buffer for receiving message from server
     char receiveBuffer[16];
 
-    std::cout << "WAITING FOR SERVER...\n";
+    std::cout << "[STARTUP] - WAITING FOR SERVER...\n";
 
     // Loop until a UDP connection is established
     while (true)
@@ -102,8 +101,8 @@ bool TcpService::ClientBroadcastReceive()
         if (result > 0)
         {
             // Read the message
-            std::cout << "[STARTUP] - BROADCAST MESSAGE RECEIVED FROM SERVER\n";
             std::string message(receiveBuffer);
+            std::cout << "[STARTUP] - TCP INFORMATION RECEIVED FROM SERVER BROADCAST: " << message << "\n";
             broadcastReceiveMessage = message;
 
             // Close the UDP socket, allowing other clients to connect

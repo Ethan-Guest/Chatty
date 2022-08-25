@@ -40,13 +40,14 @@ int main()
 void StartServer()
 {
     auto ipAddress = "127.0.0.1";
+    std::string test;
     uint16_t port = 31337;
     int maxClients;
-    //std::cout << "Server Configuration:\n";
-    //std::cout << "IP: ";
-    //std::cin >> ipAddress;
-    //std::cout << "PORT: ";
-    //std::cin >> port;
+    std::cout << "Server Configuration:\n";
+    std::cout << "IP: ";
+    std::cin >> test;
+    std::cout << "PORT: ";
+    std::cin >> port;
     std::cout << "MAX ALLOWED CLIENTS: ";
     std::cin >> maxClients;
 

@@ -18,7 +18,7 @@ bool Client::InitClient()
         WSACleanup();
         return false;
     }
-    std::cout << "CONNECTED TO SERVER\nType $help to get started.\n";
+    std::cout << "[STARTUP] - CONNECTED TO SERVER\n\nType $help to get started.\n";
     return true;
 }
 
