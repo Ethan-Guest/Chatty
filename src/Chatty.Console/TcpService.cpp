@@ -24,6 +24,10 @@ bool TcpService::InitWinsock(bool clientStartup)
         }
     }
 
+    std::vector<std::string> ipAndPort = Helper::StringToVector(broadcastReceiveMessage, ' ', false);
+    ipAddress = ipAndPort[0].c_str();
+    port = std::stoi(ipAndPort[1]);
+
     // Create a TCP listening socket
     connectionSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (connectionSocket == INVALID_SOCKET)
@@ -96,12 +100,9 @@ bool TcpService::ClientBroadcastReceive()
             std::cout << "Message recv" << receiveBuffer << std::endl;
 
             std::string message(receiveBuffer);
-            std::vector<std::string> messages = Helper::CharPtrToVector(receiveBuffer, ' ', false);
 
-            ipAddress = messages[0].c_str();
-            port = std::stoi(messages[1]);
+            broadcastReceiveMessage = message;
 
-            std::cout << ipAddress << port;
 
             closesocket(broadcastSocket);
             return true;

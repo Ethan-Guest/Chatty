@@ -22,7 +22,6 @@ public:
 		ipAddress(_ipAddress), port(_port), run(true)
 	{
 	}
-
 protected:
 
 	// Initialize the service
@@ -54,8 +53,8 @@ protected:
 
 	uint16_t port;
 
+
 private:
-
-
+	std::string broadcastReceiveMessage;
 
 };
