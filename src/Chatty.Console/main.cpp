@@ -37,7 +37,7 @@ int main()
 
 void StartServer()
 {
-    std::string ipAddress = "127.0.0.1";
+    auto ipAddress = "127.0.0.1";
     uint16_t port = 31337;
     int maxClients = 3;
     //std::cout << "Server Configuration:\n";
@@ -48,12 +48,22 @@ void StartServer()
     //std::cout << "MAX ALLOWED CLIENTS: ";
     //std::cin >> maxClients;
 
-    Server server((char*)&ipAddress, port, maxClients);
+    Server server(ipAddress, port, maxClients);
     if (server.InitServer())
     {
         server.Run();
     }
 }
+
+void StartClient()
+{
+    Client client;
+    if (client.InitClient())
+    {
+        client.Run();
+    }
+}
+
 
 bool UDPClient()
 {
@@ -83,15 +93,3 @@ bool UDPClient()
     //}
     return true;
 }
-void StartClient()
-{
-    auto ipAddress = "127.0.0.1";
-    uint16_t port = 31337;
-
-    Client client(ipAddress, port);
-    if (client.InitClient())
-    {
-        client.Run();
-    }
-}
-

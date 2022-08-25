@@ -46,6 +46,5 @@ private:
 	std::map<SOCKET, ClientProfile*> clients; // A map of clients, contains SOCKET # and client Username
 	FD_SET masterSet; // The set of ALL file descriptors
 	FD_SET readySet; // The set of READY file descriptors
-	SOCKET broadcastSocket; // The socket used for broadcasting tcp information
 	SOCKET* activeSocket; // The socket that is currently being read
 };

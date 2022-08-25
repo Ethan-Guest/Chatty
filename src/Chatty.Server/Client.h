@@ -4,12 +4,14 @@
 class Client : public TcpService
 {
 public:
-    Client(const char* ipAddress, uint16_t port) :
-        TcpService(ipAddress, port), clientMode(true)
+    Client() :
+        TcpService(), clientMode(true)
     {
     }
 
     bool InitClient(); // Initialize the client
+
+    bool AwaitUdpBroadcast();
 
     void Run() override; // The main client loop
 
@@ -19,5 +21,4 @@ private:
     const char* tcpIpAddress;
     bool clientMode;
     std::string userName; // Cleint username
-    SOCKET broadcastSocket; // The socket used for receiving broadcast information from server
 };

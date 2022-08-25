@@ -13,8 +13,11 @@
 class TcpService {
 
 public:
-
-	// Service constructor
+	// Service constructors
+	TcpService() :
+		run(true)
+	{
+	}
 	TcpService(const char* _ipAddress, int _port) :
 		ipAddress(_ipAddress), port(_port), run(true)
 	{
@@ -28,21 +31,27 @@ protected:
 	// Run the service
 	virtual void Run();
 
+	// Client waits for UDP broadcast
+	bool ClientBroadcastReceive();
+
 	int TcpSendMessage(SOCKET socket, const char* data, uint16_t length);
 
 	void TcpSendFullMessage(SOCKET s, std::string message); // Send the client a message in one method
 
 	int TcpRecieveMessage(SOCKET socket, char* buf, int length);
 
-	SOCKET				connectionSocket; // The listening / connection socket
-	SOCKADDR_IN			socketAddress;	  // The socket address
+	SOCKET connectionSocket; // The listening / connection socket
+	SOCKET broadcastSocket; // The socket used for sending / receiving broadcast information from server
+
+	SOCKADDR_IN socketAddress; // The socket address
 	SOCKADDR_IN broadcastAddr;
 
 	uint16_t messageSize;
-	char*				buffer;
+	char* buffer;
 	std::atomic<bool> run; // Synchronizing bool
 
 	const char* ipAddress;
+
 	uint16_t port;
 
 private:

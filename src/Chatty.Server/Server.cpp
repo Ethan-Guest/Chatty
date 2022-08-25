@@ -40,25 +40,7 @@ bool Server::InitServer()
     FD_ZERO(&readySet);
     FD_SET(connectionSocket, &masterSet);
 
-    // UDP BROADCAST SETUP
-    // 
-    // CREATE UDP SOCKET
-    broadcastSocket = socket(AF_INET, SOCK_DGRAM, 0);
-
-    // UDP BROADCAST OUTPUT STRUCTURE
-    broadcastAddr.sin_family = AF_INET; // AF_INET = IPv4 addresses
-    broadcastAddr.sin_port = htons(31337); // Little to big endian conversion
-    inet_pton(AF_INET, "127.0.0.1", &broadcastAddr.sin_addr); // Convert from string to byte array
-
-    int optVal = 1;
-    setsockopt(broadcastSocket, SOL_SOCKET, SO_BROADCAST, (char*)&optVal, sizeof(optVal));
-
-    // Bind the UDP socket to the outputAddr
-    if (bind(broadcastSocket, (SOCKADDR*)&broadcastAddr, sizeof(broadcastAddr)) == SOCKET_ERROR)
-    {
-        // Binding error
-        return false;
-    }
+    
     return true;
 }
 
@@ -180,14 +162,22 @@ void Server::Run()
 
 void Server::BroadcastMessage()
 {
+    // UDP BROADCAST SETUP
+    // 
+    // CREATE UDP SOCKET
+    broadcastSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    // Set broadcast socket options
+    int optVal = 1;
+    setsockopt(broadcastSocket, SOL_SOCKET, SO_BROADCAST, (char*)&optVal, sizeof(optVal));
+
+    // UDP BROADCAST OUTPUT STRUCTURE
+    broadcastAddr.sin_family = AF_INET; // AF_INET = IPv4 addresses
+    broadcastAddr.sin_port = htons(port); // Little to big endian conversion
+    broadcastAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+
     // Message to broadcast
     std::string broadcastMessage = "127.0.0.1 31337";
-
-    //// Create the broadcast socket address
-    //sockaddr_in broadcastAddress;
-    //broadcastAddress.sin_family = AF_INET;
-    //broadcastAddress.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-    //broadcastAddress.sin_port = htons(31337);
 
     // Broadcast the message once per second
     while (run.load())
