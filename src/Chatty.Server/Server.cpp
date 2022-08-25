@@ -11,7 +11,7 @@ bool Server::InitServer()
     GenerateLogFile();
 
     // Initialize winsock
-    if (!InitWinsock(true))
+    if (!InitWinsock(false))
     {
         return false;
     }

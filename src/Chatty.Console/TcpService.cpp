@@ -2,16 +2,19 @@
 #include "TcpService.h"
 
 
-bool TcpService::InitWinsock(bool serverMode) 
+bool TcpService::InitWinsock(bool clientStartup)
 {
-    // Initialize winsock
-    WSADATA wsadata;
-    if (WSAStartup(WINSOCK_VERSION, &wsadata) != 0)
+    if (!clientStartup)
     {
-        // TODO: Winsock startup error
-        return false;
+        // Initialize winsock
+        WSADATA wsadata;
+        if (WSAStartup(WINSOCK_VERSION, &wsadata) != 0)
+        {
+            // TODO: Winsock startup error
+            return false;
+        }
+        std::cout << "[" << "00:00:00" << "] - WINSOCK INITIALIZED\n";
     }
-    std::cout << "[" << "00:00:00" << "] - WINSOCK INITIALIZED\n";
 
 
     // Create a TCP listening socket
