@@ -81,10 +81,10 @@ void Client::ReceiveFromServer()
         //	If error appeared during receipt and WAS caused by shutdown, return SHUTDOWN.
         if (result == 0)
         {
-            std::cout << "DISCONNCTED FROM SERVER.\n";
+            std::cout << "DISCONNECTED FROM SERVER.\n";
             run = false;
             clientMode = false;
-            continue;
+            break;
         }
         //	If error appeared during receipt and was not caused by shutdown, return DISCONNECT.
         if (result == SOCKET_ERROR)
